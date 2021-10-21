@@ -15,6 +15,8 @@ Lightweight but more powerful version of Unity Event.
 
 [Changelog](Documentation~/Changelog.md)
 
+*Minimum version Unity required: 2019.3*
+
 ## Screenshots
 
 ![](Documentation~/Resources/Constants.jpg)

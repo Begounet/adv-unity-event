@@ -3,7 +3,7 @@
   "displayName": "Advanced Unity Event",
   "description": "Lightweight but more powerful version of Unity Event",
   "version": "1.0.0",
-  "unity": "2020.1",
+  "unity": "2019.3",
   "license": "MIT",
   "licensesUrl": "https://gitea.apperture.fr:3062/Apperture/adv-unity-event/License",
   "changelogUrl": "https://gitea.apperture.fr:3062/Apperture/adv-unity-event/Documentation~/changelog.md",
