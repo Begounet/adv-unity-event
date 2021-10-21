@@ -1,0 +1,16 @@
+{
+  "name": "com.apperture.adv-unity-event",
+  "displayName": "Advanced Unity Event",
+  "description": "Lightweight but more powerful version of Unity Event",
+  "version": "1.0.0",
+  "unity": "2020.1",
+  "license": "MIT",
+  "licensesUrl": "https://gitea.apperture.fr:3062/Apperture/adv-unity-event/License",
+  "changelogUrl": "https://gitea.apperture.fr:3062/Apperture/adv-unity-event/Documentation~/changelog.md",
+  "documentationUrl": "https://gitea.apperture.fr:3062/Apperture/adv-unity-event/ReadMe.md",
+  "author": {
+    "name": "Arnaud Begue",
+    "url": "https://twitter.com/ABegounet"
+  },
+  "type": "tool"
+}
