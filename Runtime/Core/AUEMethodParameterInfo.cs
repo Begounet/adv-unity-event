@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace AUE
@@ -18,8 +15,10 @@ namespace AUE
             Method
         }
 
+#pragma warning disable 0414
         [SerializeField]
         private EMode _mode = EMode.Constant;
+#pragma warning restore
 
         [SerializeField]
         private SerializableType _parameterType;
