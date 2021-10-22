@@ -24,6 +24,7 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool DoesParameterTypeMatch(object arg, Type parameterType)
-            => (parameterType.IsAssignableFrom(arg.GetType()));
+            // If argument is null, we don't care about the parameter type
+            => (arg == null || parameterType.IsAssignableFrom(arg.GetType()));
     }
 }
