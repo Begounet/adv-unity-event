@@ -8,19 +8,7 @@ namespace AUE
     public class BaseAUEEvent : ISerializationCallbackReceiver
     {
         [SerializeField]
-        private AUEMethod[] _events;
-
-        [SerializeField]
-        private SerializableType _returnType;
-        public Type ReturnType
-        {
-            get => _returnType.IsValidType ? _returnType.Type : null;
-            set
-            {
-                _returnType.Type = value;
-                SynchronizeToEvents();
-            }
-        }
+        private AUEMethod[] _events = new AUEMethod[0];
 
         [SerializeField]
         private List<SerializableType> _argumentTypes = new List<SerializableType>();
@@ -42,7 +30,7 @@ namespace AUE
             }
         }
 
-        public bool IsBound => (_events.Length > 0);
+        public bool IsBound => (_events?.Length > 0);
 
         protected void Invoke(params object[] args)
         {
@@ -52,25 +40,23 @@ namespace AUE
             }
         }
 
-        public void SetReturnType(Type type)
+        public void DefineParameterTypes(params Type[] types)
         {
-            _returnType.Type = type;
+            MethodSignatureDefinitionHelper.DefineParameterTypes(_argumentTypes, types);
         }
 
-        public void AddArgumentType(Type type)
+        public virtual void OnBeforeSerialize()
         {
-            _argumentTypes.Add(new SerializableType(type));
+            SynchronizeToEvents();
+            OnDefineEventsSignature();
         }
 
-        public void OnBeforeSerialize()
+        public virtual void OnAfterDeserialize()
         {
             SynchronizeToEvents();
         }
 
-        public void OnAfterDeserialize()
-        {
-            SynchronizeToEvents();
-        }
+        protected virtual void OnDefineEventsSignature() { }
 
         private void SynchronizeToEvents()
         {
@@ -78,7 +64,6 @@ namespace AUE
             {
                 for (int i = 0; i < _events.Length; ++i)
                 {
-                    _events[i].ReturnType = (_returnType.IsValidType ? _returnType.Type : null);
                     _events[i].BindingFlags = _bindingFlags;
                 }
             }

@@ -30,7 +30,7 @@ namespace AUE
 
         internal object GetValue(IMethodDatabaseOwner methodDbOwner, object[] args)
         {
-            return _customArgument.GetArgumentValue(methodDbOwner, ParameterType, args);
+            return (_customArgument?.GetArgumentValue(methodDbOwner, ParameterType, args) ?? null);
         }
     }
 }

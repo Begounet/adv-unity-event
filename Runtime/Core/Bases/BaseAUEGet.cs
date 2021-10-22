@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AUE
 {
-    public class BaseAUEGet
+    public class BaseAUEGet : ISerializationCallbackReceiver
     {
         [SerializeField]
         private AUEMethod _method = new AUEMethod()
@@ -16,22 +16,20 @@ namespace AUE
                     | BindingFlags.GetField
         };
 
-        [SerializeField]
-        private SerializableType _returnType = new SerializableType();
-
         protected T Invoke<T>(params object[] args)
         {
             return (T)_method.Invoke(args);
         }
 
-        public void SetReturnType(Type type)
+        public void DefineReturnAndParametersType(Type returnType, params Type[] paramTypes)
         {
-            _returnType.Type = type;
+            MethodSignatureDefinitionHelper.DefineReturnType(_method.ReturnType, returnType);
+            MethodSignatureDefinitionHelper.DefineParameterTypes(_method.ArgumentTypes, paramTypes);
         }
 
-        public void AddArgumentType(Type type)
-        {
-            _method.ArgumentTypes.Add(new SerializableType(type));
-        }
+        public void OnBeforeSerialize() => OnDefineSignatureMethod();
+        public void OnAfterDeserialize() { }
+
+        protected virtual void OnDefineSignatureMethod() { }
     }
 }

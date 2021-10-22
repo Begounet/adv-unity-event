@@ -33,10 +33,10 @@ namespace AUE
 
         [SerializeField]
         private SerializableType _returnType = null;
-        public Type ReturnType
+        public SerializableType ReturnType
         {
-            get => _returnType.IsValidType ? _returnType.Type : null;
-            set => _returnType.Type = value;
+            get => _returnType;
+            set => _returnType = value;
         }
 
         [SerializeField]
