@@ -1,12 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace AUE
 {
-    [CustomPropertyDrawer(typeof(AUECAMethod))]
-    public class AUECAMethodPropertyDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(AUECAMethodReference))]
+    public class AUECAMethodReferencePropertyDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {

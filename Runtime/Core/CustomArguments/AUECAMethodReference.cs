@@ -6,15 +6,15 @@ using UnityEngine;
 namespace AUE
 {
     [Serializable]
-    public class AUECAMethod : IAUECustomArgument
+    public class AUECAMethodReference : IAUECustomArgument
     {
-        [SerializeField]
-        private int _methodIndex = -1;
-
 #if UNITY_EDITOR
         [SerializeField]
         private byte _methodId;
 #endif
+
+        [SerializeField]
+        private int _methodIndex = -1;
 
         object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args)
         {

@@ -73,7 +73,7 @@ namespace AUE
                     refValue = new AUECAConstant();
                     break;
                 case EMode.Method:
-                    refValue = new AUECAMethod();
+                    refValue = new AUECAMethodReference();
                     break;
             }
             customArgumentSP.managedReferenceValue = refValue;
