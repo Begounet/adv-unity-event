@@ -1,5 +1,11 @@
 # Changelogs
 
+## 1.1.0
+
+- AUEGet now correctly use the return type for method selection
+- Return and parameters types now correctly update if the type of the AUEEvent/AUEGet has changed
+- Clean code
+
 ## 1.0.0
 
 - Reorderable events
