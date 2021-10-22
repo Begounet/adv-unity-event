@@ -9,7 +9,7 @@ using UnityEngine.Events;
 namespace AUE
 {
     [CustomPropertyDrawer(typeof(BaseAUEEvent), useForChildren: true)]
-    public class AUEPropertyDrawer : PropertyDrawer
+    public class AUEEventPropertyDrawer : PropertyDrawer
     {
         private ReorderableList _reorderableList = null;
 
