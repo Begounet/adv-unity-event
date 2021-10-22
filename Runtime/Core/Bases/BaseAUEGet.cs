@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace AUE
 {
-    [Serializable]
     public class BaseAUEGet
     {
         [SerializeField]
