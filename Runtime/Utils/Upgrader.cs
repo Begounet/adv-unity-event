@@ -14,6 +14,19 @@ namespace AUE
 {
     public static class Upgrader
     {
+        /// <summary>
+        /// Force reserialization of all scenes and prefabs in project
+        /// </summary>
+        [MenuItem("Tools/AdvUnityEvent/Upgrade")]
+        public static void Upgrade()
+        {
+            var allInstances = AssetDatabase.FindAssets("t:scene")
+                .Concat(AssetDatabase.FindAssets("t:prefab"))
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .ToArray();
+            AssetDatabase.ForceReserializeAssets(allInstances, ForceReserializeAssetsOptions.ReserializeAssets);
+        }
+
         private class ArgumentCacheWrapper
         {
             private FieldInfo _argumentsCacheFI;
@@ -57,11 +70,10 @@ namespace AUE
             }
         }
 
-
-        public static AUEEvent<T> ToAUEEvent<T>(UnityEvent<T> uEvent)
+        public static void ToAUEEvent(UnityEventBase uEvent, BaseAUEEvent aueEvent)
         {
-            AUEEvent<T> aueEvent = new AUEEvent<T>();
 #if UNITY_EDITOR
+            aueEvent.ClearEvents();
 
             var privateFieldBF = BindingFlags.Instance | BindingFlags.NonPublic;
             Type eventType = uEvent.GetType();
@@ -74,7 +86,7 @@ namespace AUE
             IList calls = (IList)callsFI.GetValue(persistentCalls);
             if (calls.Count == 0)
             {
-                return aueEvent;
+                return;
             }
 
             Type persistentCallType = calls[0].GetType();
@@ -83,70 +95,64 @@ namespace AUE
             FieldInfo modeFI = persistentCallType.GetField("m_Mode", privateFieldBF);
             FieldInfo argumentsCacheFI = persistentCallType.GetField("m_Arguments", privateFieldBF);
 
+            var argumentTypes = aueEvent.ArgumentTypes.ToArray();
             var argumentCacheWrapper = new ArgumentCacheWrapper(argumentsCacheFI);
 
             List<AUEParameterDescriptor> parameterDescs = new List<AUEParameterDescriptor>();
-            for (int i = 0; i < calls.Count; ++i)
+            for (int callIdx = 0; callIdx < calls.Count; ++callIdx)
             {
-                var call = calls[i];
+                var call = calls[callIdx];
                 var target = (UnityEngine.Object)targetFI.GetValue(call);
                 var paramMode = (PersistentListenerMode)modeFI.GetValue(call);
                 var methodName = (string)methodNameFI.GetValue(call);
 
-                parameterDescs.Clear();
-                if (target != null && !string.IsNullOrEmpty(methodName))
+                if (target == null)
                 {
-                    AUEParameterDescriptor paramDesc = GenerateParameterDescriptor(argumentCacheWrapper, call, target, paramMode, methodName);
-                    if (paramDesc != null)
-                    {
-                        parameterDescs.Add(paramDesc);
-                    }
-
-                    AUEMethodDescriptor methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), new Type[] { typeof(T) }, parameterDescs.ToArray());
-                    aueEvent.AddEvent(new AUEMethod(methodDesc));
+                    continue;
                 }
-            }
 
+                var targetType = target.GetType();
+                MethodInfo mi = FindBestMatchingMethod(targetType, methodName, paramMode, argumentTypes);
+                if (mi == null)
+                {
+                    continue;
+                }
+
+                ParameterInfo[] pis = mi.GetParameters();
+
+                parameterDescs.Clear();
+                if (pis.Length > 0)
+                {
+                    for (int paramIndex = 0; paramIndex < pis.Length; ++paramIndex)
+                    {
+                        AUEParameterDescriptor paramDesc = GenerateParameterDescriptor(paramIndex, argumentCacheWrapper, call, paramMode, pis[paramIndex].ParameterType);
+                        if (paramDesc != null)
+                        {
+                            parameterDescs.Add(paramDesc);
+                        }
+                    }
+                }
+                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray());
+                aueEvent.AddEvent(new AUEMethod(methodDesc));
+            }
 #endif
-            return aueEvent;
         }
 
         private static AUEParameterDescriptor GenerateParameterDescriptor(
+            int paramIndex,
             ArgumentCacheWrapper argumentCacheWrapper, 
-            object call, 
-            UnityEngine.Object target, 
-            PersistentListenerMode paramMode, 
-            string methodName)
+            object call,
+            PersistentListenerMode paramMode,
+            Type paramType)
         {
-            if (target == null)
-            {
-                return null;
-            }
-
-            var targetType = target.GetType();
-            MethodInfo mi = FindBestMatchingMethod(targetType, methodName, paramMode);
-            if (mi == null)
-            {
-                return null;
-            }
-
-            ParameterInfo[] pis = mi.GetParameters();
-            Type paramType = (pis.Length > 0 ? pis[0].ParameterType : null);
-            if (paramType == null)
-            {
-                return null;
-            }
-
             AUEParameterDescriptor paramDesc;
             if (paramMode == PersistentListenerMode.EventDefined)
             {
                 // Dynamic
-                paramDesc = new AUEParameterDescriptor(AUEMethodParameterInfo.EMode.Dynamic, paramType, new AUECADynamic(sourceArgumentIndex: 0));
+                paramDesc = new AUEParameterDescriptor(AUEMethodParameterInfo.EMode.Dynamic, paramType, new AUECADynamic(sourceArgumentIndex: paramIndex));
             }
             else if (paramMode != PersistentListenerMode.Void)
             {
-               
-
                 if (paramType != null)
                 {
                     // Constant
@@ -165,7 +171,7 @@ namespace AUE
             return paramDesc;
         }
 
-        private static MethodInfo FindBestMatchingMethod(Type type, string methodName, PersistentListenerMode mode)
+        private static MethodInfo FindBestMatchingMethod(Type type, string methodName, PersistentListenerMode mode, Type[] parameterTypes)
         {
             var methods = type.GetMethods();
             var matchingMethods = new List<MethodInfo>();
@@ -191,11 +197,15 @@ namespace AUE
                 return matchingMethods.FirstOrDefault((mi) =>
                 {
                     ParameterInfo[] pis = mi.GetParameters();
+                    if (mode == PersistentListenerMode.EventDefined)
+                    {
+                        return DoesAllParametersMatch(pis, parameterTypes);
+                    }
                     if (expectedParameter == null && pis.Length == 0)
                     {
                         return true;
                     }
-                    else if (expectedParameter != null && pis.Length != 1)
+                    else if (expectedParameter != null && pis.Length == 0)
                     {
                         return false;
                     }
@@ -203,6 +213,23 @@ namespace AUE
                     return expectedParameter.IsAssignableFrom(pis[0].ParameterType);
                 });
             }
+        }
+
+        private static bool DoesAllParametersMatch(ParameterInfo[] pis, Type[] parameterTypes)
+        {
+            if (pis.Length != parameterTypes.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < pis.Length; ++i)
+            {
+                if (!parameterTypes[i].IsAssignableFrom(pis[i].ParameterType))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static Type GetParameterTypeFromMode(PersistentListenerMode mode)

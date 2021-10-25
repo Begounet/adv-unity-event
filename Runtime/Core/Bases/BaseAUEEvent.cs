@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using System.Linq;
 
 namespace AUE
 {
@@ -12,6 +13,7 @@ namespace AUE
 
         [SerializeField]
         private List<SerializableType> _argumentTypes = new List<SerializableType>();
+        public IEnumerable<Type> ArgumentTypes => _argumentTypes.Select((argType) => argType.Type);
 
         [SerializeField]
         private BindingFlags _bindingFlags =
@@ -48,6 +50,11 @@ namespace AUE
         public void AddEvent(AUEMethod method)
         {
             _events.Add(method);
+        }
+
+        public void ClearEvents()
+        {
+            _events.Clear();
         }
 
         public virtual void OnBeforeSerialize()

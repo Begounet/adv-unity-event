@@ -42,11 +42,26 @@ namespace AUE
         [System.Serializable]
         public class FloatUnityEvent : UnityEvent<float> { }
 
+        [System.Serializable]
+        public class FloatIntUnityEvent : UnityEvent<float, int> { }
+
         [SerializeField]
         private FloatUnityEvent _fltUnityEvent;
 
         [SerializeField]
         private AUEEvent<float> _fltAUE;
+
+        [SerializeField]
+        private FloatIntUnityEvent _fltIntUnityEvent;
+
+        [SerializeField]
+        private AUEEvent<float, int> _fltIntAUE;
+
+        [SerializeField]
+        private UnityEvent _unityEvent;
+
+        [SerializeField]
+        private AUEEvent _aueEvent;
 
 
         [SerializeField]
@@ -100,13 +115,18 @@ namespace AUE
             return v1 + v2;
         }
 
+        public void FloatAndInt(float f, int i) { }
+
         public void OnBeforeSerialize()
         {
-            _fltAUE = Upgrader.ToAUEEvent(_fltUnityEvent);
+            Upgrader.ToAUEEvent(_fltUnityEvent, _fltAUE);
+            Upgrader.ToAUEEvent(_fltIntUnityEvent, _fltIntAUE);
+            Upgrader.ToAUEEvent(_unityEvent, _aueEvent);
         }
 
         public void OnAfterDeserialize()
         {
         }
+
     }
 }
