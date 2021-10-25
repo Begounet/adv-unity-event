@@ -1,3 +1,4 @@
+using AUE.Descriptors;
 using System;
 using UnityEngine;
 
@@ -12,7 +13,17 @@ namespace AUE
         [SerializeReference]
         private IConstantValue _constantValue;
 
-        object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args) => _constantValue.GetValue();
+        public AUECAConstant() { }
+        public AUECAConstant(object value)
+        {
+            Type valueType = value.GetType();
+
+            _type = new SerializableType(valueType);
+            _constantValue = (IConstantValue) Activator.CreateInstance(StandardConstantValues.GetConstantContainerType(valueType));
+            _constantValue.Value = value;
+        }
+
+        object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args) => _constantValue.Value;
         bool IAUECustomArgument.IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType) => true;
     }
 }

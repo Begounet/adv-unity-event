@@ -19,23 +19,97 @@ namespace AUE
             { typeof(Vector3Int), typeof(Vector3IntValue) },
         };
 
-        [Serializable] internal class IntValue : IConstantValue { public int Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class FloatValue : IConstantValue { public float Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class BoolValue : IConstantValue { public bool Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class StringValue : IConstantValue { public string Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class Vector2Value : IConstantValue { public Vector2 Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class Vector2IntValue : IConstantValue { public Vector2Int Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class Vector3Value : IConstantValue { public Vector3 Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class Vector3IntValue : IConstantValue { public Vector3Int Value; object IConstantValue.GetValue() => Value; }
-        [Serializable] internal class UnityEngineObjectValue : IConstantValue { public UnityEngine.Object Value; object IConstantValue.GetValue() => Value; }
+        [Serializable]
+        internal class IntValue : IConstantValue 
+        {
+            [SerializeField]
+            private int _value;
+            object IConstantValue.Value { get => _value; set => _value = (int)value; }
+        }
+
+        [Serializable]
+        internal class FloatValue : IConstantValue
+        {
+            [SerializeField]
+            private float _value;
+            object IConstantValue.Value { get => _value; set => _value = (float)value; }
+        }
+
+        [Serializable] 
+        internal class BoolValue : IConstantValue 
+        {
+            [SerializeField]
+            private bool _value;
+            object IConstantValue.Value { get => _value; set => _value = (bool)value; }
+        }
+
+        [Serializable]
+        internal class StringValue : IConstantValue 
+        {
+            [SerializeField]
+            private string _value;
+            object IConstantValue.Value { get => _value; set => _value = (string)value; }
+        }
+
+        [Serializable] 
+        internal class Vector2Value : IConstantValue 
+        {
+            [SerializeField]
+            private Vector2 _value;
+            object IConstantValue.Value { get => _value; set => _value = (Vector2)value; }
+        }
+
+        [Serializable]
+        internal class Vector2IntValue : IConstantValue 
+        {
+            [SerializeField]
+            private Vector2Int _value;
+            object IConstantValue.Value { get => _value; set => _value = (Vector2Int)value; }
+        }
+        
+        [Serializable] 
+        internal class Vector3Value : IConstantValue 
+        {
+            [SerializeField]
+            private Vector3 _value;
+            object IConstantValue.Value { get => _value; set => _value = (Vector3)value; }
+        }
+
+        [Serializable] 
+        internal class Vector3IntValue : IConstantValue 
+        {
+            [SerializeField]
+            private Vector3Int _value;
+            object IConstantValue.Value { get => _value; set => _value = (Vector3Int)value; }
+        }
+        
+        [Serializable] 
+        internal class UnityEngineObjectValue : IConstantValue 
+        {
+            [SerializeField]
+            private UnityEngine.Object _value;
+            object IConstantValue.Value { get => _value; set => _value = (UnityEngine.Object)value; }
+        }
 
         [Serializable]
         internal class GenericObject : IConstantValue 
         { 
             [SerializeReference]
-            public object Value;
+            private object _value;
 
-            object IConstantValue.GetValue() => Value;
+            object IConstantValue.Value { get => _value; set => _value = value; }
+        }
+
+        public static Type GetConstantContainerType(Type t)
+        {
+            foreach (var constantValue in ConstantMapping)
+            {
+                if (constantValue.Key.IsAssignableFrom(t))
+                {
+                    return constantValue.Value;
+                }
+            }
+            return typeof(GenericObject);
         }
     }
 

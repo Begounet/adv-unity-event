@@ -10,6 +10,12 @@ namespace AUE
         [SerializeField]
         private int _sourceArgumentIndex = 0;
 
+        public AUECADynamic() { }
+        public AUECADynamic(int sourceArgumentIndex)
+        {
+            _sourceArgumentIndex = sourceArgumentIndex;
+        }
+
         object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args)
         {
             if (_sourceArgumentIndex >= 0 && _sourceArgumentIndex <= args.Length &&

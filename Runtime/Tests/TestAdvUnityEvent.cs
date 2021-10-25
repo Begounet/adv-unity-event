@@ -2,10 +2,11 @@ using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace AUE
 {
-    public class TestAdvUnityEvent : MonoBehaviour
+    public class TestAdvUnityEvent : MonoBehaviour, ISerializationCallbackReceiver
     {
         [System.Serializable]
         public class Test
@@ -37,6 +38,15 @@ namespace AUE
 
         [SerializeField]
         private AUEGet<int, int> _intGetter;
+
+        [System.Serializable]
+        public class FloatUnityEvent : UnityEvent<float> { }
+
+        [SerializeField]
+        private FloatUnityEvent _fltUnityEvent;
+
+        [SerializeField]
+        private AUEEvent<float> _fltAUE;
 
 
         [SerializeField]
@@ -88,6 +98,15 @@ namespace AUE
         public int Add(int v1, int v2)
         {
             return v1 + v2;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            _fltAUE = Upgrader.ToAUEEvent(_fltUnityEvent);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
