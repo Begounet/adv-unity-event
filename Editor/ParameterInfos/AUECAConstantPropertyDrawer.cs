@@ -8,7 +8,7 @@ namespace AUE
     public class AUECAConstantPropertyDrawer : PropertyDrawer
     {
         private const string ConstantValueSPName = "_constantValue";
-        private const string ConstantInternalValueSPName = "Value";
+        private const string ConstantInternalValueSPName = "_value";
         private const string ConstantInternalValueDisplayName = "Value";
 
         private bool _isInitialized = false;
@@ -136,9 +136,9 @@ namespace AUE
                     }
                 }
 
-                var genericObject = new StandardConstantValues.GenericObject();
-                genericObject.Value = Activator.CreateInstance(argumentType);
-                return genericObject;
+                IConstantValue gObj = new StandardConstantValues.GenericObject();
+                gObj.Value = Activator.CreateInstance(argumentType);
+                return gObj;
             }
             catch (Exception ex)
             {

@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
+using System.Linq;
 
 namespace AUE
 {
     public class BaseAUEEvent : ISerializationCallbackReceiver
     {
         [SerializeField]
-        private AUEMethod[] _events = new AUEMethod[0];
+        private List<AUEMethod> _events = new List<AUEMethod>();
 
         [SerializeField]
         private List<SerializableType> _argumentTypes = new List<SerializableType>();
+        public IEnumerable<Type> ArgumentTypes => _argumentTypes.Select((argType) => argType.Type);
 
         [SerializeField]
         private BindingFlags _bindingFlags =
@@ -30,11 +32,11 @@ namespace AUE
             }
         }
 
-        public bool IsBound => (_events?.Length > 0);
+        public bool IsBound => (_events?.Count > 0);
 
         protected void Invoke(params object[] args)
         {
-            for (int i = 0; i < _events.Length; ++i)
+            for (int i = 0; i < _events.Count; ++i)
             {
                 _events[i].Invoke(args);
             }
@@ -43,6 +45,16 @@ namespace AUE
         public void DefineParameterTypes(params Type[] types)
         {
             MethodSignatureDefinitionHelper.DefineParameterTypes(_argumentTypes, types);
+        }
+
+        public void AddEvent(AUEMethod method)
+        {
+            _events.Add(method);
+        }
+
+        public void ClearEvents()
+        {
+            _events.Clear();
         }
 
         public virtual void OnBeforeSerialize()
@@ -62,7 +74,7 @@ namespace AUE
         {
             if (_events != null)
             {
-                for (int i = 0; i < _events.Length; ++i)
+                for (int i = 0; i < _events.Count; ++i)
                 {
                     _events[i].BindingFlags = _bindingFlags;
                 }

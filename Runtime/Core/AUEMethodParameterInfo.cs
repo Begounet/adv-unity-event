@@ -1,3 +1,4 @@
+using AUE.Descriptors;
 using System;
 using System.Diagnostics;
 using UnityEngine;
@@ -6,7 +7,7 @@ namespace AUE
 {
     [Serializable]
     [DebuggerDisplay("{_parameterType} ({_mode})")]
-    internal class AUEMethodParameterInfo
+    public class AUEMethodParameterInfo
     {
         public enum EMode
         {
@@ -30,6 +31,15 @@ namespace AUE
         internal object GetValue(IMethodDatabaseOwner methodDbOwner, object[] args)
         {
             return (_customArgument?.GetArgumentValue(methodDbOwner, ParameterType, args) ?? null);
+        }
+
+        public AUEMethodParameterInfo() { }
+
+        public AUEMethodParameterInfo(AUEParameterDescriptor desc, Type parameterType)
+        {
+            _mode = desc.Mode;
+            _parameterType = new SerializableType(parameterType);
+            _customArgument = desc.CustomArgument;
         }
     }
 }

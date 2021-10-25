@@ -2,6 +2,6 @@ namespace AUE
 {
     public interface IConstantValue
     {
-        object GetValue();
+        object Value { get; set; }
     }
 }

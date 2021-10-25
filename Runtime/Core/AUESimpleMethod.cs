@@ -20,19 +20,19 @@ namespace AUE
 #endif
 
         [SerializeField]
-        private UnityEventCallState _callState = UnityEventCallState.RuntimeOnly;
+        protected UnityEventCallState _callState = UnityEventCallState.RuntimeOnly;
         public UnityEventCallState CallState { get => _callState; set => _callState = value; }
 
         [SerializeField]
-        private UnityEngine.Object _target;
+        protected UnityEngine.Object _target;
         internal UnityEngine.Object Target => _target;
 
         [SerializeField]
-        private string _methodName;
+        protected string _methodName;
         internal string MethodName => _methodName;
 
         [SerializeField]
-        private SerializableType _returnType = null;
+        protected SerializableType _returnType = null;
         public SerializableType ReturnType
         {
             get => _returnType;
@@ -40,7 +40,7 @@ namespace AUE
         }
 
         [SerializeField]
-        private BindingFlags _bindingFlags = 
+        protected BindingFlags _bindingFlags = 
             BindingFlags.Public 
             | BindingFlags.NonPublic
             | BindingFlags.Instance
@@ -52,7 +52,7 @@ namespace AUE
 
         // Set by the property drawer when method is selected
         [SerializeField]
-        private AUEMethodParameterInfo[] _parameterInfos;
+        protected AUEMethodParameterInfo[] _parameterInfos;
         internal AUEMethodParameterInfo[] ParameterInfos => _parameterInfos;
 
         IMethodExecutionCache _cache;
