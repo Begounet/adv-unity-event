@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -8,7 +9,6 @@ namespace AUE
     public static class SerializedPropertyExtentions
     {
         private static Regex ArrayIndexCapturePattern = new Regex(@"\[(\d*)\]");
-        private static readonly Regex IsArrayDataParser = new Regex(@"Array.data\[\d+\]$");
 
         public static T GetTarget<T>(this SerializedProperty prop)
         {
@@ -26,7 +26,7 @@ namespace AUE
                 {
                     isNextPropertyArrayIndex = false;
                     int arrayIndex = ParseArrayIndex(propName);
-                    object[] targetAsArray = (object[])target;
+                    var targetAsArray = (IList)target;
                     target = targetAsArray[arrayIndex];
                 }
                 else
