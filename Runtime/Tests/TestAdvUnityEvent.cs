@@ -119,9 +119,9 @@ namespace AUE
 
         public void OnBeforeSerialize()
         {
-            Upgrader.ToAUEEvent(_fltUnityEvent, _fltAUE);
-            Upgrader.ToAUEEvent(_fltIntUnityEvent, _fltIntAUE);
-            Upgrader.ToAUEEvent(_unityEvent, _aueEvent);
+            Upgrader.ToAUEEvent(this, _fltUnityEvent, _fltAUE);
+            Upgrader.ToAUEEvent(this, _fltIntUnityEvent, _fltIntAUE);
+            Upgrader.ToAUEEvent(this, _unityEvent, _aueEvent);
         }
 
         public void OnAfterDeserialize()

@@ -10,20 +10,82 @@ By using the Upgrader, you can transfer the data from the `UnityEvent` to the `A
 
 ![Example of data transferred automatically](Resources/Upgrader.jpg)
 
-## Setup
+## How to
 
-There is 2 steps:
+There is 3 big steps:
 
-- transfer data from `UnityEvent` to `AUEEvent`
+- Transfer data from `UnityEvent` to `AUEEvent`
 
   - Make your class inheriting from `ISerializationCallbackReceiver`
 
-  - In `OnBeforeSerialize`, and add the line `AUE.Upgrader.ToAUEEvent(_unityEvent, _aueEvent);`
+    ```csharp
+    public class MyClass : MonoBehavior, ISerializationCallbackReceiver
+    {
+        [SerializedField]
+        private UnityEvent _myEvent;
+        
+        [SerializedField]
+        private AUEEvent _myEventAUE;
+    }
+    ```
 
-  - Recompile
+  - In `OnBeforeSerialize`, and add the line `AUE.Upgrader.ToAUEEvent(this, _unityEvent, _aueEvent);`
 
-  - From the Unity menu bar, start `Tools > AdvUnityEvent > Upgrade`. It will stall the editor during the upgrading.
+    ```csharp
+    public void OnBeforeSerialize()
+    {
+        AUE.Upgrader.ToAUEEvent(this, _myEvent, _myEventAUE);
+    }
+    ```
 
-    *Note: The upgrading consist of just forcing reserialization of all scenes and prefabs in the project so you are sure everything is upgraded.
+    
 
-- delete the `UnityEvent` and remove `ISerializationCallbackReceiver` methods and interface if you don't need them anymore
+  - Run `Tools > AdvUnityEvent > Upgrade`.
+
+  - Ensure few scenes/prefabs have their data correctly transferred.
+
+- Update and cleanup
+
+  - Remove `ISerializationCallbackReceiver` relative stuff, it is now useless.
+
+  - Remove `[SerializedField]` or change your public to private variable you are replacing. The idea is that it is not serialized anymore.
+
+    ```csharp
+    public class MyClass : MonoBehavior
+    {
+        private UnityEvent _myEvent; // Will not be serialized anymore
+        
+        [SerializedField]
+        private AUEEvent _myEventAUE;
+    }
+    ```
+
+    
+
+  - Run `Tools > AdvUnityEvent > Upgrade`.
+
+  - Open a scene/prefab in a text editor and observes that the field has disappeared from the serialization.
+
+- Rename
+
+  - Add attribute `[FormerlySerializedAs("_oldVariableName")]` on your `AUEEvent` and rename your variable as you want. When your event will be deserialized, it will keep the old field data, but future serialization will use the new name.
+
+    ```csharp
+    [SerializeField, FormerlySerializedAs("_myEventAUE")]
+    private AUEEvent _myEvent = null;
+    ```
+
+  - Run `Tools > AdvUnityEvent > Upgrade`.
+
+- Cleanup
+
+  - You can now remove the `[FormerlySerializedAs]` attribute
+
+    ```csharp
+    [SerializeField]
+    private AUEEvent _myEvent = null;
+    ```
+
+    
+
+*Note: since `Tools > AdvUnityEvent > Upgrade` is a really long operation, we recommend to do this on multiple fields/classes at the same time, instead of doing it one by one.*

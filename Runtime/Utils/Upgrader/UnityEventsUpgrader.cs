@@ -12,21 +12,8 @@ using UnityEditor;
 
 namespace AUE
 {
-    public static class Upgrader
+    internal static class UnityEventsUpgrader
     {
-        /// <summary>
-        /// Force reserialization of all scenes and prefabs in project
-        /// </summary>
-        [MenuItem("Tools/AdvUnityEvent/Upgrade")]
-        public static void Upgrade()
-        {
-            var allInstances = AssetDatabase.FindAssets("t:scene")
-                .Concat(AssetDatabase.FindAssets("t:prefab"))
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .ToArray();
-            AssetDatabase.ForceReserializeAssets(allInstances, ForceReserializeAssetsOptions.ReserializeAssets);
-        }
-
         private class ArgumentCacheWrapper
         {
             private FieldInfo _argumentsCacheFI;
@@ -70,7 +57,7 @@ namespace AUE
             }
         }
 
-        public static void ToAUEEvent(UnityEventBase uEvent, BaseAUEEvent aueEvent)
+        public static void ToAUEEvent(UnityEngine.Object owner, UnityEventBase uEvent, BaseAUEEvent aueEvent)
         {
 #if UNITY_EDITOR
             aueEvent.ClearEvents();
@@ -135,12 +122,14 @@ namespace AUE
                 var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray());
                 aueEvent.AddEvent(new AUEMethod(methodDesc));
             }
+
+            EditorUtility.SetDirty(owner);
 #endif
         }
 
         private static AUEParameterDescriptor GenerateParameterDescriptor(
             int paramIndex,
-            ArgumentCacheWrapper argumentCacheWrapper, 
+            ArgumentCacheWrapper argumentCacheWrapper,
             object call,
             PersistentListenerMode paramMode,
             Type paramType)
