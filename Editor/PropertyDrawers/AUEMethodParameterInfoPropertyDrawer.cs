@@ -29,7 +29,6 @@ namespace AUE
             Rect lineRect = position;
             lineRect.height = EditorGUIUtility.singleLineHeight;
 
-            float modeStartX = position.xMax - ModeWidth;
             Rect labelRect = new Rect(lineRect.x, lineRect.y, lineRect.width - ModeWidth - LabelModeSpace, lineRect.height);
             Rect modeRect = new Rect(lineRect.xMax - ModeWidth, lineRect.y, ModeWidth, lineRect.height);
             property.isExpanded = EditorGUI.Foldout(labelRect, property.isExpanded, label);
@@ -59,8 +58,7 @@ namespace AUE
                 {
                     Rect propRect = new Rect(lineRect.x, lineRect.y, lineRect.width, EditorGUI.GetPropertyHeight(customArgumentSP, includeChildren: customArgumentSP.isExpanded));
                     var propertyDrawer = customArgumentSP.GetPropertyDrawer();
-                    //propertyDrawer.OnGUI(propRect, customArgumentSP, new GUIContent(customArgumentSP.displayName));
-                    EditorGUI.PropertyField(propRect, customArgumentSP, includeChildren: customArgumentSP.isExpanded);
+                    propertyDrawer.OnGUI(propRect, customArgumentSP, new GUIContent(customArgumentSP.displayName));
                 }
                 --EditorGUI.indentLevel;
             }

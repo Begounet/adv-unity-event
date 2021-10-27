@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -12,36 +14,59 @@ namespace AUE
     public class AUEEventPropertyDrawer : PropertyDrawer
     {
         private ReorderableList _reorderableList = null;
+        private GUIContent _label;
+
+        private static readonly MethodInfo DoListHeaderMI = typeof(ReorderableList).GetMethod("DoListHeader", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            InitReorderableList(property, label);
-            float height = EditorGUIUtility.singleLineHeight;
-            if (property.isExpanded)
-            {
-                height += EditorGUIUtility.standardVerticalSpacing;
-                height += _reorderableList.GetHeight();
-            }
+            InitReorderableList(property);
+            float height = property.isExpanded ? _reorderableList.GetHeight() : EditorGUIUtility.singleLineHeight;
+            height += EditorGUIUtility.standardVerticalSpacing;
             return height;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            InitReorderableList(property, label);
-
-            Rect lineRect = position;
-            lineRect.height = EditorGUIUtility.singleLineHeight;
-
-            property.isExpanded = EditorGUI.Foldout(lineRect, property.isExpanded, label);
+            CacheLabel(property, label);
+            InitReorderableList(property);
             if (property.isExpanded)
             {
-                position.y = lineRect.yMax;
-                position.height -= (lineRect.height + EditorGUIUtility.standardVerticalSpacing);
                 _reorderableList.DoList(position);
+            }
+            else
+            {
+                DrawOnlyHeader(position);
             }
         }
 
-        private void InitReorderableList(SerializedProperty property, GUIContent label)
+        private void CacheLabel(SerializedProperty property, GUIContent baseLabel)
+        {
+            if (_label != null)
+            {
+                return;
+            }
+
+            var argumentTypesSP = property.FindPropertyRelative(AUEUtils.ArgumentTypesSPName);
+            var argumentTypesSB = new StringBuilder();
+            for (int i = 0; i < argumentTypesSP.arraySize; ++i)
+            {
+                Type argumentType = SerializableTypeHelper.LoadType(argumentTypesSP.GetArrayElementAtIndex(i));
+                argumentTypesSB.Append(AUEUtils.MakeHumanDisplayType(argumentType));
+                if (i + 1 < argumentTypesSP.arraySize)
+                {
+                    argumentTypesSB.Append(", ");
+                }
+            }
+            _label = new GUIContent($"{baseLabel.text}({argumentTypesSB.ToString()})", baseLabel.tooltip);
+        }
+
+        private void DrawOnlyHeader(Rect position)
+        {
+            DoListHeaderMI.Invoke(_reorderableList, new object[] { position });
+        }
+
+        private void InitReorderableList(SerializedProperty property)
         {
             if (_reorderableList != null)
             {
@@ -49,7 +74,7 @@ namespace AUE
             }
 
             var eventsSP = property.FindPropertyRelative("_events");
-            _reorderableList = new ReorderableList(property.serializedObject, eventsSP, draggable: true, displayHeader: false, displayAddButton: true, displayRemoveButton: true)
+            _reorderableList = new ReorderableList(property.serializedObject, eventsSP, draggable: true, displayHeader: true, displayAddButton: true, displayRemoveButton: true)
             {
                 onAddCallback = (rol) =>
                 {
@@ -57,8 +82,14 @@ namespace AUE
                     var newItem = eventsSP.GetArrayElementAtIndex(eventsSP.arraySize - 1);
                     newItem.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
                     newItem.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
-                    newItem.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int) UnityEventCallState.RuntimeOnly;
+                    newItem.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
                     SyncArgumentTypes(property, newItem);
+                },
+                drawHeaderCallback = (Rect headerRect) =>
+                {
+                    headerRect.xMin += 10;
+                    headerRect.height = 18f;
+                    property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
                 },
                 drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
                 {
@@ -70,7 +101,7 @@ namespace AUE
                 {
                     var eventSP = eventsSP.GetArrayElementAtIndex(index);
                     return EditorGUI.GetPropertyHeight(eventSP, eventsSP.isExpanded);
-                }
+                },
             };
         }
 
