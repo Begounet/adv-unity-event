@@ -12,3 +12,8 @@ references:
     00000000:
 		type: {class: AUECADynamic, ns: AUE, asm: OldAsmDefName}
 ```
+
+## Unsupported copy/paste
+
+Copy/paste is not supported for now and its behavior is unknown. And further, you should not use it since the result of the paste can corrupt the internal behavior of AUEEvent.
+
