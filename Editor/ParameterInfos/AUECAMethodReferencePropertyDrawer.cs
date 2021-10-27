@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,12 +10,19 @@ namespace AUE
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return EditorGUI.GetPropertyHeight(GetMethodSerializedProperty(property));
+            var methodSP = GetMethodSerializedProperty(property);
+            var propertyDrawer = methodSP.GetPropertyDrawer();
+            return propertyDrawer.GetPropertyHeight(methodSP, label);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.PropertyField(position, GetMethodSerializedProperty(property));
+            var methodSP = GetMethodSerializedProperty(property);
+
+            // Find and use property drawer to draw because Unity sucks and fallback on default property drawer
+            // for no reason.
+            var propertyDrawer = methodSP.GetPropertyDrawer();
+            propertyDrawer?.OnGUI(position, methodSP, label);
         }
 
         private static SerializedProperty GetMethodSerializedProperty(SerializedProperty property)

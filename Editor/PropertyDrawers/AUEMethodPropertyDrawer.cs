@@ -13,6 +13,9 @@ namespace AUE
             public InvokeInfo NewInvokeInfo = null;
         }
 
+        private const int CallStateModeWidth = 150;
+        private const int TargetCallStateSpace = 10;
+
         private const string MethodNameSPName = "_methodName";
         private const string TargetSPName = "_target";
         private const string ParameterInfosSPName = "_parameterInfos";
@@ -21,9 +24,20 @@ namespace AUE
 
         private Dictionary<string, PropertyMetaData> _metaData = new Dictionary<string, PropertyMetaData>();
 
+        private static GUIStyle MethodButtonStyle;
+
+        private void InitializePropertyDrawerIFN()
+        {
+            if (MethodButtonStyle == null)
+            {
+                MethodButtonStyle = new GUIStyle(GUI.skin.button);
+                MethodButtonStyle.alignment = TextAnchor.MiddleLeft;
+            }
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 2;
+            float height = (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 1;
 
             var targetSP = property.FindPropertyRelative(TargetSPName);
             if (targetSP.objectReferenceValue != null)
@@ -52,16 +66,25 @@ namespace AUE
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            InitializePropertyDrawerIFN();
+
             Rect lineRect = position;
             lineRect.height = EditorGUIUtility.singleLineHeight;
 
-            EditorGUI.PropertyField(lineRect, property.FindPropertyRelative(CallStateSPName));
-            lineRect.y += lineRect.height + EditorGUIUtility.standardVerticalSpacing;
+            Rect targetRect = lineRect;
+            targetRect.width = targetRect.width - CallStateModeWidth - TargetCallStateSpace;
+
+            Rect callStateRect = new Rect(targetRect.xMax + TargetCallStateSpace, targetRect.y, CallStateModeWidth, lineRect.height);
+            using (new PropertyDrawerHelper.IndentedLevelResetScope())
+            {
+                EditorGUI.PropertyField(callStateRect, property.FindPropertyRelative(CallStateSPName), GUIContent.none);
+            }
 
             EditorGUI.BeginChangeCheck();
             var targetSP = property.FindPropertyRelative(TargetSPName);
-            EditorGUI.PropertyField(lineRect, targetSP);
             lineRect.y += lineRect.height + EditorGUIUtility.standardVerticalSpacing;
+            EditorGUI.PropertyField(targetRect, targetSP, GUIContent.none);
+
             if (EditorGUI.EndChangeCheck())
             {
                 UpdateMethodName(property, null);
@@ -89,7 +112,8 @@ namespace AUE
             if (AUEUtils.LoadMethodInfoFromAUEMethod(property, out TargetInvokeInfo[] invokeInfos, out InvokeInfo selectedInvoke))
             {
                 string method = (selectedInvoke != null ? selectedInvoke.MethodMeta.DisplayName : "<None>");
-                if (GUI.Button(position, new GUIContent(method)))
+                Rect indentedPosition = EditorGUI.IndentedRect(position);
+                if (GUI.Button(indentedPosition, new GUIContent(method), MethodButtonStyle))
                 {
                     var dropdown = new MethodSearchDropdown(property, invokeInfos,
                         (prop, newInvokeInfo) =>
@@ -99,7 +123,7 @@ namespace AUE
                             var metaData = CreateTempMetaData(prop);
                             metaData.NewInvokeInfo = newInvokeInfo;
                         });
-                    dropdown.Show(position);
+                    dropdown.Show(indentedPosition);
                 }
 
                 var metaData = TryGetTempMetaData(property);
@@ -166,10 +190,16 @@ namespace AUE
                         float height = EditorGUI.GetPropertyHeight(parameterInfoSP);
                         Rect propRect = new Rect(position.x, position.y, position.width, height);
                         GUI.Box(propRect, GUIContent.none);
-                        EditorGUI.PropertyField(propRect, 
-                            parameterInfoSP, 
-                            new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"),
-                            parameterInfosSP.isExpanded);
+
+                        var propertyDrawers = parameterInfoSP.GetPropertyDrawers();
+                        var pd = parameterInfoSP.GetPropertyDrawer();
+
+                        pd.OnGUI(propRect, parameterInfoSP, new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"));
+
+                        //EditorGUI.PropertyField(propRect, 
+                        //    parameterInfoSP, 
+                        //    new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"),
+                        //    parameterInfosSP.isExpanded);
                         position.y += height + EditorGUIUtility.standardVerticalSpacing;
                     }
                     --EditorGUI.indentLevel;
