@@ -19,7 +19,7 @@ namespace AUE
             prop.stringValue = typeName;
         }
 
-        public static void SetTypeName(SerializedProperty serializableTypeSP, Type type)
+        public static void SetType(SerializedProperty serializableTypeSP, Type type)
             => SetTypeName(serializableTypeSP, GetTypeName(type));
 
         public static Type LoadType(SerializedProperty serializableTypeSP)
@@ -29,6 +29,9 @@ namespace AUE
         {
             SetTypeName(dst, GetTypeName(src));
         }
+
+        public static void ClearType(SerializedProperty serializableType)
+            => SetTypeName(serializableType, string.Empty);
 
         public static string GetTypeName(Type type) => type.AssemblyQualifiedName;
     }

@@ -100,12 +100,15 @@ namespace AUE
                 target = component.gameObject;
             }
 
+            var targetType = GetTargetType(target);
+
             var bindingFlags = (BindingFlags) aueMethodSP.FindPropertyRelative(BindingFlagsSPName).intValue;
+            bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
             Type returnType = SerializableTypeHelper.LoadType(aueMethodSP.FindPropertyRelative(ReturnTypeSPName));
             MethodFilter methodFilter = new MethodFilter()
-            {
-                TargetType = target.GetType(),
+            { 
+                TargetType = targetType,
                 ReturnType = returnType,
                 BindingFlags = bindingFlags
             };
@@ -167,7 +170,6 @@ namespace AUE
         public static MethodMetaData LoadMethodMetaDataFromAUEMethod(SerializedProperty aueMethodSP)
         {
             var targetSP = aueMethodSP.FindPropertyRelative(TargetSPName);
-            var methodSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
             var returnTypeSP = aueMethodSP.FindPropertyRelative(ReturnTypeSPName);
             var parametersTypeSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             var bindingFlagsSP = aueMethodSP.FindPropertyRelative(BindingFlagsSPName);
@@ -178,11 +180,11 @@ namespace AUE
                 return null;
             }
 
-            var methodName = methodSP.stringValue;
             var returnType = SerializableTypeHelper.LoadType(returnTypeSP);
             var bindingFlags = (BindingFlags) bindingFlagsSP.intValue;
+            bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
-            var methodFilter = new MethodFilter() { TargetType = target.GetType(), ReturnType = returnType, BindingFlags = bindingFlags };
+            var methodFilter = new MethodFilter() { TargetType = GetTargetType(target), ReturnType = returnType, BindingFlags = bindingFlags };
             return MethodTypeCache.GetMethod(methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
         }
 
@@ -286,6 +288,10 @@ namespace AUE
 
         public static string MakeHumanDisplayType(Type t)
         {
+            if (t == null)
+            {
+                return "<Undefined>";
+            }
             if (HumanReadableType.TryGetValue(t, out string value))
             {
                 return value;
@@ -296,5 +302,24 @@ namespace AUE
         public static bool IsMethod(MethodInfo mi) => (!mi.IsSpecialName);
         public static bool IsGetter(MethodInfo mi) => (mi.IsSpecialName && mi.ReturnType != typeof(void));
         public static bool IsSetter(MethodInfo mi) => (mi.IsSpecialName && mi.ReturnType == typeof(void));
+
+        public static Type GetTargetType(object target)
+        {
+            if (target is MonoScript ms)
+            {
+                return ms.GetClass();
+            }
+            return target.GetType();
+        }
+
+        public static BindingFlags AdaptBindingFlags(object target, BindingFlags bindingFlags)
+        {
+            if (target is MonoScript)
+            {
+                bindingFlags &= ~BindingFlags.Instance;
+                bindingFlags |= BindingFlags.Static;
+            }
+            return bindingFlags;
+        }
     }
 }

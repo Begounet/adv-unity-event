@@ -62,6 +62,11 @@ namespace AUE
 #if UNITY_EDITOR
             aueEvent.ClearEvents();
 
+            if (uEvent == null)
+            {
+                return;
+            }
+
             var privateFieldBF = BindingFlags.Instance | BindingFlags.NonPublic;
             Type eventType = uEvent.GetType();
 
@@ -190,11 +195,13 @@ namespace AUE
                     {
                         return DoesAllParametersMatch(pis, parameterTypes);
                     }
-                    if (expectedParameter == null && pis.Length == 0)
+
+                    bool hasParameters = (pis.Length > 0);
+                    if (expectedParameter == null)
                     {
-                        return true;
+                        return !hasParameters;
                     }
-                    else if (expectedParameter != null && pis.Length == 0)
+                    else if (expectedParameter != null && !hasParameters)
                     {
                         return false;
                     }

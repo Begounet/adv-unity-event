@@ -1,8 +1,7 @@
+#if UNITY_EDITOR
 using UnityEngine.Events;
 using System.Linq;
-#if UNITY_EDITOR
 using UnityEditor;
-#endif
 
 namespace AUE
 {
@@ -14,8 +13,19 @@ namespace AUE
         [MenuItem("Tools/AdvUnityEvent/Upgrade")]
         public static void Upgrade()
         {
-            var allInstances = AssetDatabase.FindAssets("t:scene")
-                .Concat(AssetDatabase.FindAssets("t:prefab"))
+            string aueSettingsPath = AssetDatabase.FindAssets($"t:{nameof(AUESettings)}")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .FirstOrDefault();
+            if (string.IsNullOrEmpty(aueSettingsPath))
+            {
+                UnityEngine.Debug.LogError($"Could not find settings of type {nameof(AUESettings)} in the project. Abort upgrade.");
+                return;
+            }
+
+            var settings = AssetDatabase.LoadAssetAtPath<AUESettings>(aueSettingsPath);
+
+            var allInstances = AssetDatabase.FindAssets("t:scene", settings.SceneDirectories)
+                .Concat(AssetDatabase.FindAssets("t:prefab", settings.PrefabDirectories))
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where((path) => path.StartsWith("Assets/"))
                 .ToArray();
@@ -32,3 +42,4 @@ namespace AUE
             => UnityEventsUpgrader.ToAUEEvent(owner, uEvent, aueEvent);
     }
 }
+#endif

@@ -21,6 +21,7 @@ namespace AUE
         private const string ParameterInfosSPName = "_parameterInfos";
         private const string ParameterTypeSPName = "_parameterType";
         private const string CallStateSPName = "_callState";
+        private const string StaticTypeSPName = "_staticType";
 
         private Dictionary<string, PropertyMetaData> _metaData = new Dictionary<string, PropertyMetaData>();
 
@@ -71,13 +72,18 @@ namespace AUE
             Rect lineRect = position;
             lineRect.height = EditorGUIUtility.singleLineHeight;
 
-            Rect targetRect = lineRect;
-            targetRect.width = targetRect.width - CallStateModeWidth - TargetCallStateSpace;
+            var callStateSP = property.FindPropertyRelative(CallStateSPName);
 
-            Rect callStateRect = new Rect(targetRect.xMax + TargetCallStateSpace, targetRect.y, CallStateModeWidth, lineRect.height);
-            using (new PropertyDrawerHelper.IndentedLevelResetScope())
+            Rect targetRect = lineRect;
+            if (callStateSP != null)
             {
-                EditorGUI.PropertyField(callStateRect, property.FindPropertyRelative(CallStateSPName), GUIContent.none);
+                targetRect.width = targetRect.width - CallStateModeWidth - TargetCallStateSpace;
+
+                Rect callStateRect = new Rect(targetRect.xMax + TargetCallStateSpace, targetRect.y, CallStateModeWidth, lineRect.height);
+                using (new PropertyDrawerHelper.IndentedLevelResetScope())
+                {
+                    EditorGUI.PropertyField(callStateRect, callStateSP, GUIContent.none);
+                }
             }
 
             EditorGUI.BeginChangeCheck();
@@ -138,10 +144,12 @@ namespace AUE
                             var methodMetaData = newInvokeInfo.MethodMeta;
                             UpdateMethodName(property, methodMetaData);
                             UpdateTarget(property, newInvokeInfo.Target);
+                            UpdateStaticType(property, newInvokeInfo.Target);
                             UpdateParameterInfos(property, methodMetaData.MethodInfo);
                         }
                         else
                         {
+                            UpdateStaticType(property, null);
                             UpdateMethodName(property, null);
                             UpdateParameterInfos(property, null);
                         }
@@ -153,6 +161,20 @@ namespace AUE
                 }
 
                 position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+            }
+        }
+
+        private void UpdateStaticType(SerializedProperty property, Object target)
+        {
+            var staticTypeSP = property.FindPropertyRelative(StaticTypeSPName);
+            if (target is MonoScript)
+            {
+                var targetType = AUEUtils.GetTargetType(target);
+                SerializableTypeHelper.SetType(staticTypeSP, targetType);
+            }
+            else
+            {
+                SerializableTypeHelper.ClearType(staticTypeSP);
             }
         }
 
@@ -191,15 +213,9 @@ namespace AUE
                         Rect propRect = new Rect(position.x, position.y, position.width, height);
                         GUI.Box(propRect, GUIContent.none);
 
-                        var propertyDrawers = parameterInfoSP.GetPropertyDrawers();
-                        var pd = parameterInfoSP.GetPropertyDrawer();
+                        var propertyDrawer = parameterInfoSP.GetPropertyDrawer();
+                        propertyDrawer.OnGUI(propRect, parameterInfoSP, new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"));
 
-                        pd.OnGUI(propRect, parameterInfoSP, new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"));
-
-                        //EditorGUI.PropertyField(propRect, 
-                        //    parameterInfoSP, 
-                        //    new GUIContent($"{AUEUtils.MakeHumanDisplayType(parameterInfos[i].ParameterType)} {parameterInfos[i].Name}"),
-                        //    parameterInfosSP.isExpanded);
                         position.y += height + EditorGUIUtility.standardVerticalSpacing;
                     }
                     --EditorGUI.indentLevel;
@@ -233,7 +249,7 @@ namespace AUE
         private static void InitializeParameterInfo(SerializedProperty parameterInfoSP, System.Type parameterType)
         {
             var parameterTypeSP = parameterInfoSP.FindPropertyRelative(ParameterTypeSPName);
-            SerializableTypeHelper.SetTypeName(parameterTypeSP, parameterType);
+            SerializableTypeHelper.SetType(parameterTypeSP, parameterType);
 
             var modeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ModeSPName);
             modeSP.enumValueIndex = (int)AUEMethodParameterInfo.EMode.Constant;

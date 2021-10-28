@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace AUE
 {
@@ -19,9 +18,11 @@ namespace AUE
         private byte _id;
 #endif
 
+        /// <summary>
+        /// Contains the type when the method is static
+        /// </summary>
         [SerializeField]
-        protected UnityEventCallState _callState = UnityEventCallState.RuntimeOnly;
-        public UnityEventCallState CallState { get => _callState; set => _callState = value; }
+        private SerializableType _staticType;
 
         [SerializeField]
         protected UnityEngine.Object _target;
@@ -55,11 +56,13 @@ namespace AUE
         protected AUEMethodParameterInfo[] _parameterInfos;
         internal AUEMethodParameterInfo[] ParameterInfos => _parameterInfos;
 
+        public bool IsStatic => _staticType.IsValidType;
+
         IMethodExecutionCache _cache;
 
         internal object Invoke(IMethodDatabaseOwner methodDbOwner, params object[] args)
         {
-            if (!IsValid() || !CanBeExecuted())
+            if (!IsValid())
             {
                 return null;
             }
@@ -85,20 +88,6 @@ namespace AUE
             }
 #endif
 
-        }
-
-        private bool CanBeExecuted()
-        {
-            if (_callState == UnityEventCallState.Off)
-            {
-                return false;
-            }
-            else if (_callState == UnityEventCallState.RuntimeOnly)
-            {
-                return UnityEngine.Application.isPlaying;
-            }
-
-            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -140,14 +129,14 @@ namespace AUE
 
         internal MethodInfo GetFastMethod()
         {
-            Type targetType = _target.GetType();
+            Type targetType = GetTargeType();
             Type[] methodParameterTypes = GenerateMethodParameterTypes();
             return targetType.GetMethod(_methodName, methodParameterTypes);
         }
 
         internal MethodInfo GetSafeMethod()
         {
-            Type targetType = _target.GetType();
+            Type targetType = GetTargeType();
             if (targetType == null)
             {
                 return null;
@@ -157,12 +146,17 @@ namespace AUE
             return targetType.GetMethod(_methodName, parameterTypes);
         }
 
+        private Type GetTargeType()
+        {
+            return (IsStatic ? _staticType.Type : _target.GetType());
+        }
+
 #if UNITY_DEVELOPMENT_BUILD && AUE_SAFE
         internal MethodInfo GetSafeVerboseMethod()
         {
             try
             {
-                Type targetType = _target.GetType();
+                Type targetType = GetTargeType();
                 if (targetType == null)
                 {
                     return null;
@@ -178,7 +172,7 @@ namespace AUE
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Could not get method {_methodName} from class {_target?.GetType()?.FullName ?? "unknown"} from assembly {_target?.GetType()?.Assembly.ToString() ?? "unknown"}");
+                Debug.LogError($"Could not get method {_methodName} from class {GetTargeType()?.FullName ?? "unknown"} from assembly {GetTargeType()?.Assembly.ToString() ?? "unknown"}");
                 Debug.LogException(ex);
                 return null;                    
             }

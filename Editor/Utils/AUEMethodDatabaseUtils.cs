@@ -176,7 +176,7 @@ namespace AUE
             methodSP.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
             methodSP.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
             methodSP.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
-            SerializableTypeHelper.SetTypeName(methodSP.FindPropertyRelative(AUEUtils.ReturnTypeSPName), typeof(void));
+            SerializableTypeHelper.SetType(methodSP.FindPropertyRelative(AUEUtils.ReturnTypeSPName), typeof(void));
             methodSP.FindPropertyRelative(AUEUtils.ParameterInfosSPName).arraySize = 0;
             methodSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)
                 (BindingFlags.Public
