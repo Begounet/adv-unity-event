@@ -13,14 +13,18 @@ namespace AUE
     [CustomPropertyDrawer(typeof(BaseAUEEvent), useForChildren: true)]
     public class AUEEventPropertyDrawer : PropertyDrawer
     {
+        private const string EventsSPName = "_events";
+
         private ReorderableList _reorderableList = null;
         private GUIContent _label;
+        private bool _isStateInitialized = false;
 
         private static readonly MethodInfo DoListHeaderMI = typeof(ReorderableList).GetMethod("DoListHeader", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             InitReorderableList(property);
+            InitializeState(property);
             float height = property.isExpanded ? _reorderableList.GetHeight() : EditorGUIUtility.singleLineHeight;
             height += EditorGUIUtility.standardVerticalSpacing;
             return height;
@@ -30,6 +34,7 @@ namespace AUE
         {
             CacheLabel(property, label);
             InitReorderableList(property);
+            InitializeState(property);
             if (property.isExpanded)
             {
                 _reorderableList.DoList(position);
@@ -38,6 +43,17 @@ namespace AUE
             {
                 DrawOnlyHeader(position);
             }
+        }
+
+        private void InitializeState(SerializedProperty property)
+        {
+            if (_isStateInitialized)
+            {
+                return;
+            }
+
+            property.isExpanded = (property.FindPropertyRelative(EventsSPName).arraySize > 0);
+            _isStateInitialized = true;
         }
 
         private void CacheLabel(SerializedProperty property, GUIContent baseLabel)
@@ -52,7 +68,14 @@ namespace AUE
             for (int i = 0; i < argumentTypesSP.arraySize; ++i)
             {
                 Type argumentType = SerializableTypeHelper.LoadType(argumentTypesSP.GetArrayElementAtIndex(i));
-                argumentTypesSB.Append(AUEUtils.MakeHumanDisplayType(argumentType));
+                if (argumentType != null)
+                {
+                    argumentTypesSB.Append(AUEUtils.MakeHumanDisplayType(argumentType));
+                }
+                else
+                {
+                    argumentTypesSB.Append("<undefined>");
+                }
                 if (i + 1 < argumentTypesSP.arraySize)
                 {
                     argumentTypesSB.Append(", ");
@@ -73,7 +96,7 @@ namespace AUE
                 return;
             }
 
-            var eventsSP = property.FindPropertyRelative("_events");
+            var eventsSP = property.FindPropertyRelative(EventsSPName);
             _reorderableList = new ReorderableList(property.serializedObject, eventsSP, draggable: true, displayHeader: true, displayAddButton: true, displayRemoveButton: true)
             {
                 onAddCallback = (rol) =>
