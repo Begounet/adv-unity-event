@@ -1,6 +1,6 @@
 {
     "name": "AdvUnityEvent.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "AUE",
     "references": [
         "GUID:98443e9e1b5c13e438be4f8b5742d20b"
     ],

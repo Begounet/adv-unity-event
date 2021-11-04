@@ -9,6 +9,26 @@ namespace AUE
     [CustomPropertyDrawer(typeof(AUECADynamic))]
     public class AUECADynamicPropertyDrawer : PropertyDrawer
     {
+        public static void Initialize(SerializedProperty property)
+        {
+            var paramInfoSP = property.GetParent();
+            var paramInfoTypeSP = paramInfoSP.FindPropertyRelative(AUEUtils.ParameterInfoTypeSPName);
+            var paramInfoType = SerializableTypeHelper.LoadType(paramInfoTypeSP);
+
+            var sourceArgumentIndexSP = property.FindPropertyRelative(AUEUtils.CADynamicSourceArgumentIndexSPName);
+            sourceArgumentIndexSP.intValue = -1;
+
+            Type[] argumentTypes = LoadDynamicTypeFromParent(property);
+            for (int i = 0; i < argumentTypes.Length; ++i)
+            {
+                if (DoesMethodParameterMatchArgumentType(paramInfoType, argumentTypes[i]))
+                {
+                    sourceArgumentIndexSP.intValue = i;
+                    break;
+                }
+            }
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
@@ -62,7 +82,7 @@ namespace AUE
             }
         }
 
-        private bool DoesMethodParameterMatchArgumentType(Type methodParamType, Type dynamicType) 
+        private static bool DoesMethodParameterMatchArgumentType(Type methodParamType, Type dynamicType) 
             => (dynamicType == methodParamType || dynamicType.IsSubclassOf(methodParamType));
 
         private static Type[] LoadDynamicTypeFromParent(SerializedProperty property)

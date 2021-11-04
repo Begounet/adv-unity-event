@@ -62,6 +62,11 @@ namespace AUE
 #if UNITY_EDITOR
             aueEvent.ClearEvents();
 
+            if (uEvent == null)
+            {
+                return;
+            }
+
             var privateFieldBF = BindingFlags.Instance | BindingFlags.NonPublic;
             Type eventType = uEvent.GetType();
 
@@ -80,6 +85,7 @@ namespace AUE
             FieldInfo targetFI = persistentCallType.GetField("m_Target", privateFieldBF);
             FieldInfo methodNameFI = persistentCallType.GetField("m_MethodName", privateFieldBF);
             FieldInfo modeFI = persistentCallType.GetField("m_Mode", privateFieldBF);
+            FieldInfo callStateFI = persistentCallType.GetField("m_CallState", privateFieldBF);
             FieldInfo argumentsCacheFI = persistentCallType.GetField("m_Arguments", privateFieldBF);
 
             var argumentTypes = aueEvent.ArgumentTypes.ToArray();
@@ -92,6 +98,7 @@ namespace AUE
                 var target = (UnityEngine.Object)targetFI.GetValue(call);
                 var paramMode = (PersistentListenerMode)modeFI.GetValue(call);
                 var methodName = (string)methodNameFI.GetValue(call);
+                var callState = (UnityEventCallState)callStateFI.GetValue(call);
 
                 if (target == null)
                 {
@@ -119,7 +126,10 @@ namespace AUE
                         }
                     }
                 }
-                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray());
+                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray())
+                {
+                    CallState = callState
+                };
                 aueEvent.AddEvent(new AUEMethod(methodDesc));
             }
 
@@ -190,11 +200,13 @@ namespace AUE
                     {
                         return DoesAllParametersMatch(pis, parameterTypes);
                     }
-                    if (expectedParameter == null && pis.Length == 0)
+
+                    bool hasParameters = (pis.Length > 0);
+                    if (expectedParameter == null)
                     {
-                        return true;
+                        return !hasParameters;
                     }
-                    else if (expectedParameter != null && pis.Length == 0)
+                    else if (expectedParameter != null && !hasParameters)
                     {
                         return false;
                     }

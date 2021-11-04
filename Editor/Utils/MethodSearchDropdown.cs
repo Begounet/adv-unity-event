@@ -61,10 +61,11 @@ namespace AUE
                 var targetInvokeInfo = _targetInvokeInfos[i];
                 if (targetInvokeInfo.Methods.Count > 0)
                 {
-                    var targetInvokeInfoItem = new AdvancedDropdownItem(MakeHumanDisplayType(targetInvokeInfo.Target.GetType()));
+                    var targetType = GetTargetType(targetInvokeInfo.Target);
+                    var targetInvokeInfoItem = new AdvancedDropdownItem(MakeHumanDisplayType(targetType));
 
                     var groupQuery = targetInvokeInfo.Methods.GroupBy((mmd) => mmd.MethodInfo.DeclaringType)
-                        .OrderBy((group) => GetDeclaringTypeDepth(targetInvokeInfo.Target.GetType(), group.Key));
+                        .OrderBy((group) => GetDeclaringTypeDepth(targetType, group.Key));
 
                     foreach (var group in groupQuery)
                     {

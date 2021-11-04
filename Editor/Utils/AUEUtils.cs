@@ -20,6 +20,7 @@ namespace AUE
         public const string BindingFlagsSPName = "_bindingFlags";
         public const string ParameterInfoTypeSPName = "_parameterType";
         public const string CAConstantTypeSPName = "_type";
+        public const string CAConstantValueSPName = "_constantValue";
         public const string CAMethodIdSPName = "_methodId";
         public const string ArgumentTypesSPName = "_argumentTypes";
         public const string CADynamicSourceArgumentIndexSPName = "_sourceArgumentIndex";
@@ -64,6 +65,49 @@ namespace AUE
             return true;
         }
 
+        /// <summary>
+        /// Try direct load methodinfo from an AUE method.
+        /// The method data are created from the target, the method name and the parameter types.
+        /// </summary>
+        public static MethodInfo GetMethodInfoFromAUEMethod(SerializedProperty aueMethodSP)
+        {
+            var targetSP = aueMethodSP.FindPropertyRelative(TargetSPName);
+            if (targetSP.objectReferenceValue == null)
+            {
+                return null;
+            }
+
+            var methodNameSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
+            if (string.IsNullOrWhiteSpace(methodNameSP.stringValue))
+            {
+                return null;
+            }
+
+            var target = targetSP.objectReferenceValue;
+            var targetType = GetTargetType(target);
+
+            var bindingFlags = (BindingFlags)aueMethodSP.FindPropertyRelative(BindingFlagsSPName).intValue;
+            bindingFlags = AdaptBindingFlags(target, bindingFlags);
+
+            Type returnType = SerializableTypeHelper.LoadType(aueMethodSP.FindPropertyRelative(ReturnTypeSPName));
+            MethodFilter methodFilter = new MethodFilter()
+            {
+                TargetType = targetType,
+                ReturnType = returnType,
+                BindingFlags = bindingFlags
+            };
+
+            var parameterInfosSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
+            Type[] parameterTypes = new Type[parameterInfosSP.arraySize];
+            for (int i = 0; i < parameterTypes.Length; ++i)
+            {
+                var parameterInfoSP = parameterInfosSP.GetArrayElementAtIndex(i);
+                var parameterInfoTypeSP = parameterInfoSP.FindPropertyRelative(ParameterInfoTypeSPName);
+                parameterTypes[i] = SerializableTypeHelper.LoadType(parameterInfoTypeSP);
+            }
+            return targetType.GetMethod(methodNameSP.stringValue, parameterTypes);
+        }
+
         private static InvokeInfo GetCurentInvokeInfo(SerializedProperty aueMethodSP, List<TargetInvokeInfo> invokeInfos)
         {
             var methodNameSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
@@ -100,12 +144,15 @@ namespace AUE
                 target = component.gameObject;
             }
 
+            var targetType = GetTargetType(target);
+
             var bindingFlags = (BindingFlags) aueMethodSP.FindPropertyRelative(BindingFlagsSPName).intValue;
+            bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
             Type returnType = SerializableTypeHelper.LoadType(aueMethodSP.FindPropertyRelative(ReturnTypeSPName));
             MethodFilter methodFilter = new MethodFilter()
-            {
-                TargetType = target.GetType(),
+            { 
+                TargetType = targetType,
                 ReturnType = returnType,
                 BindingFlags = bindingFlags
             };
@@ -151,7 +198,7 @@ namespace AUE
                 .Select((mi) => new MethodMetaData()
                 {
                     MethodInfo = mi,
-                    DisplayName = GenerateMethodDisplayName(mi)
+                    DisplayName = MethodPreviewBuilder.GenerateMethodDisplayName(mi)
                 })
                 .ToArray(); 
         }
@@ -167,7 +214,6 @@ namespace AUE
         public static MethodMetaData LoadMethodMetaDataFromAUEMethod(SerializedProperty aueMethodSP)
         {
             var targetSP = aueMethodSP.FindPropertyRelative(TargetSPName);
-            var methodSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
             var returnTypeSP = aueMethodSP.FindPropertyRelative(ReturnTypeSPName);
             var parametersTypeSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             var bindingFlagsSP = aueMethodSP.FindPropertyRelative(BindingFlagsSPName);
@@ -178,11 +224,11 @@ namespace AUE
                 return null;
             }
 
-            var methodName = methodSP.stringValue;
             var returnType = SerializableTypeHelper.LoadType(returnTypeSP);
             var bindingFlags = (BindingFlags) bindingFlagsSP.intValue;
+            bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
-            var methodFilter = new MethodFilter() { TargetType = target.GetType(), ReturnType = returnType, BindingFlags = bindingFlags };
+            var methodFilter = new MethodFilter() { TargetType = GetTargetType(target), ReturnType = returnType, BindingFlags = bindingFlags };
             return MethodTypeCache.GetMethod(methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
         }
 
@@ -195,38 +241,6 @@ namespace AUE
                 paramTypes[i] = SerializableTypeHelper.LoadType(parameterInfoSP.FindPropertyRelative(ParameterInfoTypeSPName));
             }
             return paramTypes;
-        }
-
-        public static string GenerateMethodDisplayName(MethodInfo methodInfo)
-        {
-            StringBuilder paramsSb = new StringBuilder();
-            Type targetType = methodInfo.DeclaringType;
-            ParameterInfo[] pis = methodInfo.GetParameters();
-            for (int i = 0; i < pis.Length; ++i)
-            {
-                paramsSb.Append($"{MakeHumanDisplayType(pis[i].ParameterType)} {pis[i].Name}");
-                if (i + 1 < pis.Length)
-                {
-                    paramsSb.Append(", ");
-                }
-            }
-            // If property...
-            if (methodInfo.IsSpecialName)
-            {
-                string properytName = methodInfo.Name.Remove(0, 4);
-
-                // If setter...
-                if (methodInfo.ReturnType == typeof(void))
-                {
-                    return $"{properytName} ({paramsSb})";
-                }
-                // else is getter...
-                else
-                {
-                    return $"{MakeHumanDisplayType(methodInfo.ReturnType)} {properytName}";
-                }
-            }
-            return $"{MakeHumanDisplayType(methodInfo.ReturnType)} {methodInfo.Name}({paramsSb})";
         }
 
         private static bool DoesParametersMatch(MethodInfo methodInfo, SerializedProperty aueMethodSP)
@@ -286,6 +300,10 @@ namespace AUE
 
         public static string MakeHumanDisplayType(Type t)
         {
+            if (t == null)
+            {
+                return "<Undefined>";
+            }
             if (HumanReadableType.TryGetValue(t, out string value))
             {
                 return value;
@@ -296,5 +314,24 @@ namespace AUE
         public static bool IsMethod(MethodInfo mi) => (!mi.IsSpecialName);
         public static bool IsGetter(MethodInfo mi) => (mi.IsSpecialName && mi.ReturnType != typeof(void));
         public static bool IsSetter(MethodInfo mi) => (mi.IsSpecialName && mi.ReturnType == typeof(void));
+
+        public static Type GetTargetType(object target)
+        {
+            if (target is MonoScript ms)
+            {
+                return ms.GetClass();
+            }
+            return target.GetType();
+        }
+
+        public static BindingFlags AdaptBindingFlags(object target, BindingFlags bindingFlags)
+        {
+            if (target is MonoScript)
+            {
+                bindingFlags &= ~BindingFlags.Instance;
+                bindingFlags |= BindingFlags.Static;
+            }
+            return bindingFlags;
+        }
     }
 }

@@ -15,17 +15,19 @@ namespace AUE
         public static void AddNewEntry(SerializedProperty aueSP, out SerializedProperty newEntrySP, out byte entryId)
         {
             var methodDatabaseSP = aueSP.FindPropertyRelative(AUEUtils.MethodDatabaseSPName);
+            int availableId = FindAvailableId(methodDatabaseSP);
             int newIndex = methodDatabaseSP.arraySize;
             methodDatabaseSP.InsertArrayElementAtIndex(newIndex);
             newEntrySP = methodDatabaseSP.GetArrayElementAtIndex(newIndex);
             var idSP = newEntrySP.FindPropertyRelative(AUEUtils.IdSPName);
-            idSP.intValue = FindAvailableId(methodDatabaseSP);
+            idSP.intValue = availableId;
             entryId = (byte)idSP.intValue;
         }
 
         private static byte FindAvailableId(SerializedProperty methodDatabaseSP)
         {
-            byte availableId = 0;
+            // Starts from 1. 0 is reserved by default, newly created method.
+            byte availableId = 1;
             bool shouldContinue = true;
             while (shouldContinue)
             {
@@ -171,15 +173,16 @@ namespace AUE
 
         private static void InitializeNewEntry(SerializedProperty methodSP)
         {
-            methodSP.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
+            methodSP.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
+            methodSP.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
+            SerializableTypeHelper.SetType(methodSP.FindPropertyRelative(AUEUtils.ReturnTypeSPName), typeof(void));
+            methodSP.FindPropertyRelative(AUEUtils.ParameterInfosSPName).arraySize = 0;
             methodSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)
                 (BindingFlags.Public
                 | BindingFlags.NonPublic
                 | BindingFlags.Instance
                 | BindingFlags.GetField
-                | BindingFlags.GetProperty
-                | BindingFlags.SetProperty
-                | BindingFlags.SetField);
+                | BindingFlags.GetProperty);
         }
     }
 }

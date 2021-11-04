@@ -41,4 +41,28 @@ namespace AUE
 
         protected override void OnDefineEventsSignature() => DefineParameterTypes(typeof(T0), typeof(T1), typeof(T2), typeof(T3));
     }
+
+    /// <summary>
+    /// Special event whose the type can be changed at runtime.
+    /// Allow to pass any arguments. It should match the parameter type.
+    /// </summary>
+    [Serializable]
+    public class CustomizableAUEEvent : BaseAUEEvent
+    {
+        public bool SafeInvoke(params object[] args)
+        {
+            int argIdx = 0;
+            foreach (var argType in ArgumentTypes)
+            {
+                if (!argType.IsAssignableFrom(argIdx.GetType()))
+                {
+                    return false;
+                }
+            }
+            base.Invoke(args);
+            return true;
+        }
+
+        public new void Invoke(params object[] args) => base.Invoke(args);
+    }
 }

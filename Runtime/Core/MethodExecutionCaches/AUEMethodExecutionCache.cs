@@ -8,6 +8,7 @@ namespace AUE
     {
         private readonly AUESimpleMethod _aueMethod;
 
+        private UnityEngine.Object _cachedTarget;
         private MethodInfo _cachedMethodInfo;
         private object[] _cachedParameters;
 
@@ -24,7 +25,7 @@ namespace AUE
 #else
                 (safeAccess ? _aueMethod.GetSafeMethod() : _aueMethod.GetFastMethod());
 #endif
-
+            _cachedTarget = _aueMethod.IsStatic ? null : _aueMethod.Target;
         }
 
         object IMethodExecutionCache.Invoke(IMethodDatabaseOwner methodDbOwner, params object[] args)
@@ -33,7 +34,7 @@ namespace AUE
             {
                 _cachedParameters[i] = _aueMethod.ParameterInfos[i].GetValue(methodDbOwner, args);
             }
-            return _cachedMethodInfo.Invoke(_aueMethod.Target, _cachedParameters);
+            return _cachedMethodInfo.Invoke(_cachedTarget, _cachedParameters);
         }        
     }
 }
