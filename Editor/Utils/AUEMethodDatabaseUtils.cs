@@ -173,7 +173,6 @@ namespace AUE
 
         private static void InitializeNewEntry(SerializedProperty methodSP)
         {
-            methodSP.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
             methodSP.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
             methodSP.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
             SerializableTypeHelper.SetType(methodSP.FindPropertyRelative(AUEUtils.ReturnTypeSPName), typeof(void));
