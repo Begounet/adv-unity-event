@@ -147,7 +147,7 @@ namespace AUE
             var methodSP = AUEMethodDatabaseUtils.FindMethodById(methodDatabaseSP, (byte)methodIdSP.intValue);
             if (methodSP != null)
             {
-                return $"({GenerateMethodPreview(methodSP, displayReturnType: false)})";
+                return GenerateMethodPreview(methodSP, displayReturnType: false);
             }
             return Undefined;
         }
