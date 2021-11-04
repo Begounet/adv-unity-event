@@ -117,7 +117,10 @@ namespace AUE
             var methodNameSP = property.FindPropertyRelative(MethodNameSPName);
             if (AUEUtils.LoadMethodInfoFromAUEMethod(property, out TargetInvokeInfo[] invokeInfos, out InvokeInfo selectedInvoke))
             {
-                string method = (selectedInvoke != null ? selectedInvoke.MethodMeta.DisplayName : "<None>");
+                string method = selectedInvoke != null ? 
+                    MethodPreviewBuilder.GenerateMethodPreview(property, selectedInvoke.MethodMeta.MethodInfo) :
+                    "<None>";
+
                 Rect indentedPosition = EditorGUI.IndentedRect(position);
                 if (GUI.Button(indentedPosition, new GUIContent(method), MethodButtonStyle))
                 {
@@ -256,6 +259,8 @@ namespace AUE
 
             var customArgumentSP = parameterInfoSP.FindPropertyRelative(AUEUtils.CustomArgumentSPName);
             customArgumentSP.managedReferenceValue = null;
+
+            AUEMethodParameterInfoPropertyDrawer.InitializeCustomArgument(parameterInfoSP);
         }
 
         private void SetMethodDirty(SerializedProperty property)

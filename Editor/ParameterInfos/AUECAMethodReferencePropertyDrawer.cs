@@ -8,6 +8,12 @@ namespace AUE
     [CustomPropertyDrawer(typeof(AUECAMethodReference))]
     public class AUECAMethodReferencePropertyDrawer : PropertyDrawer
     {
+        public static void Initialize(SerializedProperty property)
+        {
+            // Force get method to initialize the method
+            GetMethodSerializedProperty(property);
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var methodSP = GetMethodSerializedProperty(property);

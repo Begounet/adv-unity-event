@@ -19,6 +19,22 @@ namespace AUE
         private SerializedProperty _parentParameterTypeSP;
         private Type _argumentType;
 
+        public static void Initialize(SerializedProperty property)
+        {
+            var parameterInfoSP = property.GetParent();
+            var parentParameterTypeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ParameterInfoTypeSPName);
+            var constantTypeSP = property.FindPropertyRelative(AUEUtils.CAConstantTypeSPName);
+            SerializableTypeHelper.CopySerializableType(parentParameterTypeSP, constantTypeSP);
+
+            var argumentType = SerializableTypeHelper.LoadType(constantTypeSP);
+            var constantValueSP = property.FindPropertyRelative(ConstantValueSPName);
+
+            if (argumentType != null && string.IsNullOrEmpty(constantValueSP.managedReferenceFullTypename))
+            {
+                constantValueSP.managedReferenceValue = TryCreateDefaultManagedReferenceValue(argumentType);
+            }
+        }
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             Initialize();
@@ -124,7 +140,7 @@ namespace AUE
             }
         }
 
-        private IConstantValue TryCreateDefaultManagedReferenceValue(Type argumentType)
+        private static IConstantValue TryCreateDefaultManagedReferenceValue(Type argumentType)
         {
             try
             {

@@ -64,13 +64,28 @@ namespace AUE
             }
         }
 
-        private void UpdateCustomArgumentType(SerializedProperty parameterInfoSP, SerializedProperty customArgumentSP, EMode mode)
+        public static void InitializeCustomArgument(SerializedProperty parameterInfoSP)
+        {
+            var customArgumentSP = parameterInfoSP.FindPropertyRelative(AUEUtils.CustomArgumentSPName);
+            var modeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ModeSPName);
+            UpdateCustomArgumentType(parameterInfoSP, customArgumentSP, (EMode)modeSP.intValue);
+        }
+
+        private static void UpdateCustomArgumentType(SerializedProperty parameterInfoSP, SerializedProperty customArgumentSP, EMode mode)
         {
             TryDeleteMethodFromDatabase(parameterInfoSP, customArgumentSP);
             InitializeCustomArgument(customArgumentSP, mode);
         }
 
-        private void InitializeCustomArgument(SerializedProperty customArgumentSP, EMode mode)
+        private static void InitializeCustomArgumentIFN(SerializedProperty customArgumentSP, EMode mode)
+        {
+            if (string.IsNullOrEmpty(customArgumentSP.managedReferenceFullTypename))
+            {
+                InitializeCustomArgument(customArgumentSP, mode);
+            }
+        }
+
+        private static void InitializeCustomArgument(SerializedProperty customArgumentSP, EMode mode)
         {
             object refValue = null;
             switch (mode)
@@ -86,13 +101,17 @@ namespace AUE
                     break;
             }
             customArgumentSP.managedReferenceValue = refValue;
-        }
-
-        private void InitializeCustomArgumentIFN(SerializedProperty customArgumentSP, EMode mode)
-        {
-            if (string.IsNullOrEmpty(customArgumentSP.managedReferenceFullTypename))
+            switch (mode)
             {
-                InitializeCustomArgument(customArgumentSP, mode);
+                case EMode.Dynamic:
+                    AUECADynamicPropertyDrawer.Initialize(customArgumentSP);
+                    break;
+                case EMode.Constant:
+                    AUECAConstantPropertyDrawer.Initialize(customArgumentSP);
+                    break;
+                case EMode.Method:
+                    AUECAMethodReferencePropertyDrawer.Initialize(customArgumentSP);
+                    break;
             }
         }
 
