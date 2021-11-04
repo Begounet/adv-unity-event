@@ -85,6 +85,7 @@ namespace AUE
             FieldInfo targetFI = persistentCallType.GetField("m_Target", privateFieldBF);
             FieldInfo methodNameFI = persistentCallType.GetField("m_MethodName", privateFieldBF);
             FieldInfo modeFI = persistentCallType.GetField("m_Mode", privateFieldBF);
+            FieldInfo callStateFI = persistentCallType.GetField("m_CallState", privateFieldBF);
             FieldInfo argumentsCacheFI = persistentCallType.GetField("m_Arguments", privateFieldBF);
 
             var argumentTypes = aueEvent.ArgumentTypes.ToArray();
@@ -97,6 +98,7 @@ namespace AUE
                 var target = (UnityEngine.Object)targetFI.GetValue(call);
                 var paramMode = (PersistentListenerMode)modeFI.GetValue(call);
                 var methodName = (string)methodNameFI.GetValue(call);
+                var callState = (UnityEventCallState)callStateFI.GetValue(call);
 
                 if (target == null)
                 {
@@ -124,7 +126,10 @@ namespace AUE
                         }
                     }
                 }
-                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray());
+                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray())
+                {
+                    CallState = callState
+                };
                 aueEvent.AddEvent(new AUEMethod(methodDesc));
             }
 
