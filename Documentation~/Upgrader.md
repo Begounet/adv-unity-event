@@ -12,6 +12,8 @@ By using the Upgrader, you can transfer the data from the `UnityEvent` to the `A
 
 ## How to
 
+**Ensure to have commit everything before starting, since a wrong manipulation could mean to lost all your events data without being able to back up. The operation is long and can be confused.**
+
 There is 3 big steps:
 
 - Transfer data from `UnityEvent` to `AUEEvent`
@@ -48,7 +50,7 @@ There is 3 big steps:
 
   - Remove `ISerializationCallbackReceiver` relative stuff, it is now useless.
 
-  - Remove `[SerializedField]` or change your public to private variable you are replacing. The idea is that it is not serialized anymore.
+  - Remove `[SerializedField]` or change your public to private variable you are replacing. The idea is that it is not serialized anymore. *But it still must be present!*
 
     ```csharp
     public class MyClass : MonoBehavior
