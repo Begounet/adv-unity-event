@@ -15,6 +15,7 @@ namespace AUE
 
         private const int CallStateModeWidth = 150;
         private const int TargetCallStateSpace = 10;
+        private const int MethodSelectionButtonHeight = 20;
 
         private const string MethodNameSPName = "_methodName";
         private const string TargetSPName = "_target";
@@ -43,21 +44,16 @@ namespace AUE
             var targetSP = property.FindPropertyRelative(TargetSPName);
             if (targetSP.objectReferenceValue != null)
             {
-                height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                height += MethodSelectionButtonHeight + EditorGUIUtility.standardVerticalSpacing;
 
                 var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
-                if (parameterInfosSP.arraySize > 0)
+                if (parameterInfosSP.arraySize > 0 && parameterInfosSP.isExpanded)
                 {
-                    // Foldout label
-                    height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                    if (parameterInfosSP.isExpanded)
+                    // Parameter infos heights
+                    for (int i = 0; i < parameterInfosSP.arraySize; ++i)
                     {
-                        // Parameter infos heights
-                        for (int i = 0; i < parameterInfosSP.arraySize; ++i)
-                        {
-                            height += EditorGUI.GetPropertyHeight(parameterInfosSP.GetArrayElementAtIndex(i));
-                            height += EditorGUIUtility.standardVerticalSpacing;
-                        }
+                        height += EditorGUI.GetPropertyHeight(parameterInfosSP.GetArrayElementAtIndex(i));
+                        height += EditorGUIUtility.standardVerticalSpacing;
                     }
                 }
             }
@@ -122,6 +118,7 @@ namespace AUE
                     "<None>";
 
                 Rect indentedPosition = EditorGUI.IndentedRect(position);
+                indentedPosition.height = MethodSelectionButtonHeight;
                 if (GUI.Button(indentedPosition, new GUIContent(method), MethodButtonStyle))
                 {
                     var dropdown = new MethodSearchDropdown(property, invokeInfos,
@@ -163,7 +160,7 @@ namespace AUE
                     }
                 }
 
-                position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                position.y += MethodSelectionButtonHeight + EditorGUIUtility.standardVerticalSpacing;
             }
         }
 
@@ -200,8 +197,7 @@ namespace AUE
                 return;
             }
 
-            parameterInfosSP.isExpanded = EditorGUI.Foldout(position, parameterInfosSP.isExpanded, parameterInfosSP.displayName);
-            position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+            DrawParameterInfosFoldout(position, parameterInfosSP);
 
             if (parameterInfosSP.isExpanded)
             {
@@ -224,6 +220,15 @@ namespace AUE
                     --EditorGUI.indentLevel;
                 }
             }
+        }
+
+        private static void DrawParameterInfosFoldout(Rect position, SerializedProperty parameterInfosSP)
+        {
+            Rect foldoutRect = position;
+            foldoutRect.x -= 18;
+            foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
+            foldoutRect.height = MethodSelectionButtonHeight;
+            parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
         }
 
         private void UpdateParameterInfos(SerializedProperty aueSP, MethodInfo methodInfo)
