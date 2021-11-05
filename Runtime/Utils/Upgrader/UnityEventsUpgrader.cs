@@ -126,7 +126,7 @@ namespace AUE
                         }
                     }
                 }
-                var methodDesc = new AUEMethodDescriptor(target, methodName, typeof(void), argumentTypes, parameterDescs.ToArray())
+                var methodDesc = new AUEMethodDescriptor(target, methodName, null, argumentTypes, parameterDescs.ToArray())
                 {
                     CallState = callState
                 };

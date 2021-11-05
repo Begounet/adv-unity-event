@@ -227,7 +227,6 @@ namespace AUE
             Rect foldoutRect = position;
             foldoutRect.x -= 18;
             foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
-            foldoutRect.height = MethodSelectionButtonHeight;
             parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
         }
 
