@@ -77,6 +77,7 @@ namespace AUE
                 for (int i = 0; i < _events.Count; ++i)
                 {
                     _events[i].BindingFlags = _bindingFlags;
+                    _events[i].ReturnType = null; // Temporary : should not be required, but in previous implementation, return type was void, being wrong stuff
                 }
             }
         }

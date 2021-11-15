@@ -5,12 +5,14 @@ using UnityEngine;
 
 namespace AUE
 {
-    [System.Serializable]
+    [Serializable]
     public class Caster
     {
-        internal delegate object CastFunc(object src, ICastSettings settings);
+        public delegate object CastFunc(object src, ICastSettings settings);
+        public delegate TDst CastFunc<TSrc, TDst>(TSrc src, ICastSettings settings);
+        public delegate TDst CastFunc<TSrc, TDst, TSettings>(TSrc src, TSettings settings);
 
-        internal class CastItem
+        public class CastItem
         {
             public Type TargetType { get; set; }
             public CastFunc Cast { get; set; }
@@ -24,24 +26,43 @@ namespace AUE
             }
         }
 
-        private static readonly Dictionary<Type, CastItem[]> SupportedCastMap = new Dictionary<Type, CastItem[]>
+        public class CastItem<TSrc, TDst> : CastItem
+        {
+            public CastItem(CastFunc<TSrc, TDst> typedCast, Type settingsType = null)
+                : base(typeof(TDst), (obj, settings) => typedCast((TSrc)obj, settings), settingsType) { }
+        }
+
+        public class CastItem<TSrc, TDst, TSettings> : CastItem
+        {
+            public CastItem(CastFunc<TSrc, TDst, TSettings> typedCast)
+                : base(typeof(TDst), (obj, settings) => typedCast((TSrc)obj, (TSettings)settings), typeof(TSettings)) { }
+        }
+
+        /// <remarks>
+        /// Public so devs can add new custom casts.
+        /// </remarks>
+        /// <example>
+        /// SupportedCastMap.Add(typeof(MyCustomClass), new CastItem[] { new CastItem<MyCustomClass, MyOtherClass>((obj, s) => ConvertMyCustomClassToMyOtherClass(obj); });
+        /// </example>
+        public static readonly Dictionary<Type, CastItem[]> SupportedCastMap = new Dictionary<Type, CastItem[]>
         {
             { 
                 typeof(int), new CastItem[]
                 {
-                    new CastItem(typeof(float), (obj, s) => (float) obj),
-                    new CastItem(typeof(byte), (obj, s) => (byte) obj),
-                    new CastItem(typeof(short), (obj, s) => (short) obj),
-                    new CastItem(typeof(ushort), (obj, s) => (ushort) obj),
+                    new CastItem<int, float>((obj, s) => obj),
+                    new CastItem<int, byte>((obj, s) => (byte) obj),
+                    new CastItem<int, short>((obj, s) => (short) obj),
+                    new CastItem<int, ushort>((obj, s) => (ushort) obj),
                 }
             },
             {
                 typeof(float), new CastItem[]
                 {
-                    new CastItem(typeof(int), (obj, s) => ((FloatToIntCastSettings)s).Cast((float)obj), typeof(FloatToIntCastSettings)),
+                    new CastItem<int, float, FloatToIntCastSettings>((obj, s) => s.Cast(obj)),
                 }
             }
         };
+
 
         public static bool CanBeCasted(Type typeSrc, Type typeDst) => FindCaster(typeSrc, typeDst) != null;
 

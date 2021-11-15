@@ -7,9 +7,9 @@ namespace AUE
     [CustomPropertyDrawer(typeof(AUECAConstant))]
     public class AUECAConstantPropertyDrawer : PropertyDrawer
     {
-        private const string ConstantValueSPName = "_constantValue";
-        private const string ConstantInternalValueSPName = "_value";
-        private const string ConstantInternalValueDisplayName = "Value";
+        public const string ConstantValueSPName = "_constantValue";
+        public const string ConstantInternalValueSPName = "_value";
+        public const string ConstantInternalValueDisplayName = "Value";
 
         private bool _isInitialized = false;
         private GUIContent _internalLabelValue;
@@ -18,6 +18,7 @@ namespace AUE
         private SerializedProperty _internValueSP;
         private SerializedProperty _parentParameterTypeSP;
         private Type _argumentType;
+        private bool _shouldDrawOnlyValue;
 
         public static void Initialize(SerializedProperty property)
         {
@@ -104,10 +105,19 @@ namespace AUE
             _constantTypeSP = property.FindPropertyRelative(AUEUtils.CAConstantTypeSPName);
             _argumentType = SerializableTypeHelper.LoadType(_constantTypeSP);
             _constantValueSP = property.FindPropertyRelative(ConstantValueSPName);
-            _internValueSP = _constantValueSP.FindPropertyRelative(ConstantInternalValueSPName);
 
             var parameterInfoSP = property.GetParent();
             _parentParameterTypeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ParameterInfoTypeSPName);
+
+            _shouldDrawOnlyValue = StandardConstantValues.ShouldDrawValueOnly(_argumentType);
+            if (_shouldDrawOnlyValue)
+            {
+                _internValueSP = _constantValueSP.FindPropertyRelative(ConstantInternalValueSPName);
+            }
+            else
+            {
+                _internValueSP = _constantValueSP.Copy();
+            }
         }
 
         private void EnsureConstantTypeMatching()
@@ -144,11 +154,11 @@ namespace AUE
         {
             try
             {
-                foreach (var constantValue in StandardConstantValues.ConstantMapping)
+                foreach (var constantValueType in StandardConstantValues.ConstantMapping)
                 {
-                    if (constantValue.Key.IsAssignableFrom(argumentType))
+                    if (constantValueType.Key.IsAssignableFrom(argumentType))
                     {
-                        return (IConstantValue)Activator.CreateInstance(constantValue.Value);
+                        return (IConstantValue)Activator.CreateInstance(constantValueType.Value);
                     }
                 }
 

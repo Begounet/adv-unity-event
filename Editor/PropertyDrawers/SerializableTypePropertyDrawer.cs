@@ -28,7 +28,7 @@ namespace AUE
             InitializeTypeSearchDropdownIFN(property);
             Rect valueRect = EditorGUI.PrefixLabel(position, label);
             Type currentType = SerializableTypeHelper.LoadType(property);
-            if (GUI.Button(valueRect, currentType.FullName))
+            if (GUI.Button(valueRect, currentType?.FullName ?? "<undefined>"))
             {
                 _typeSearchDropdown.Show(valueRect);
             }

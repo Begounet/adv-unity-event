@@ -21,7 +21,7 @@ namespace AUE
 
         object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args)
         {
-            if (_sourceArgumentIndex >= 0 && _sourceArgumentIndex <= args.Length);
+            if (_sourceArgumentIndex >= 0 && _sourceArgumentIndex <= args.Length)
             {
                 var arg = args[_sourceArgumentIndex];
                 if (DoesParameterTypeMatch(arg, ParameterType) ||

@@ -134,6 +134,13 @@ namespace AUE
                 {
                     return $"\"{str}\"";
                 }
+                // Specal case for enums
+                else if (constantValue is StandardConstantValues.EnumValue)
+                {
+                    var constantTypeSP = customArgumentSP.FindPropertyRelative(AUEUtils.CAConstantTypeSPName);
+                    Type constantType = SerializableTypeHelper.LoadType(constantTypeSP);
+                    return EnumDisplayNameHelper.GetName((Enum)Enum.ToObject(constantType, constantValue.Value), constantType);
+                }
                 return constantValue.Value.ToString();
             }
             return Undefined;
