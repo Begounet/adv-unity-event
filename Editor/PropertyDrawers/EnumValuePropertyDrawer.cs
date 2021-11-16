@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,17 +21,24 @@ namespace AUE
         {
             bool isFlag = Initialize(property);
 
+            var valueSP = property.FindPropertyRelative(ValueSPName);
+            _enumValue = (Enum) Enum.ToObject(_cachedType, valueSP.intValue);
+
+            Enum newValue;
+
             if (isFlag)
             {
-                _enumValue = EditorGUI.EnumFlagsField(position, label, _enumValue);
+                newValue = EditorGUI.EnumFlagsField(position, label, _enumValue);
             }
             else
             {
-                _enumValue = EditorGUI.EnumPopup(position, label, _enumValue);
+                newValue = EditorGUI.EnumPopup(position, label, _enumValue);
             }
 
-            var valueSP = property.FindPropertyRelative(ValueSPName);
-            valueSP.intValue = (int)(object) _enumValue;
+            if (newValue != _enumValue)
+            {
+                valueSP.intValue = (int)(object)newValue;
+            }
         }
 
         private bool Initialize(SerializedProperty property)
