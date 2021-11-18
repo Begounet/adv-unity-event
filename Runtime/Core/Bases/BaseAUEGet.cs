@@ -6,6 +6,8 @@ namespace AUE
 {
     public class BaseAUEGet : ISerializationCallbackReceiver
     {
+        public bool IsBound => _method.IsValid();
+
         [SerializeField]
         private AUEMethod _method = new AUEMethod()
         {
