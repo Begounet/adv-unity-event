@@ -99,12 +99,8 @@ namespace AUE
             {
                 DrawMethodSelection(ref lineRect, targetSP.objectReferenceValue, property);
 
-                ++EditorGUI.indentLevel;
-                {
-                    var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
-                    DrawParameterInfos(ref lineRect, property, parameterInfosSP);
-                }
-                --EditorGUI.indentLevel;
+                var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
+                DrawParameterInfos(ref lineRect, property, parameterInfosSP);
             }
         }
 
@@ -204,7 +200,6 @@ namespace AUE
                 ParameterInfo[] parameterInfos = AUEUtils.LoadParameterTypesFromAUEMethod(aueMethodSP);
                 if (parameterInfos != null)
                 {
-                    ++EditorGUI.indentLevel;
                     for (int i = 0; i < parameterInfosSP.arraySize; ++i)
                     {
                         var parameterInfoSP = parameterInfosSP.GetArrayElementAtIndex(i);
@@ -217,17 +212,21 @@ namespace AUE
 
                         position.y += height + EditorGUIUtility.standardVerticalSpacing;
                     }
-                    --EditorGUI.indentLevel;
                 }
             }
         }
 
         private static void DrawParameterInfosFoldout(Rect position, SerializedProperty parameterInfosSP)
         {
-            Rect foldoutRect = position;
-            foldoutRect.x -= 18;
-            foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
-            parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
+            int indentLevel = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            {
+                Rect foldoutRect = position;
+                foldoutRect.x -= 18;
+                foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
+                parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
+            }
+            EditorGUI.indentLevel = indentLevel;
         }
 
         private void UpdateParameterInfos(SerializedProperty aueSP, MethodInfo methodInfo)

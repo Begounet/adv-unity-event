@@ -110,9 +110,13 @@ namespace AUE
                 },
                 drawHeaderCallback = (Rect headerRect) =>
                 {
-                    headerRect.xMin += 10;
-                    headerRect.height = 18f;
-                    property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
+                    int indentLevel = EditorGUI.indentLevel;
+                    EditorGUI.indentLevel = 0;
+                    {
+                        headerRect.height = 18f;
+                        property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
+                    }
+                    EditorGUI.indentLevel = indentLevel;
                 },
                 drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
                 {
