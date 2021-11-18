@@ -23,6 +23,12 @@ namespace AUE
 
         public void DefineReturnAndParametersType(Type returnType, params Type[] paramTypes)
         {
+            // Can sometimes happens because... Unity?
+            if (_method.ReturnType == null)
+            {
+                _method.ReturnType = new SerializableType();
+            }
+
             MethodSignatureDefinitionHelper.DefineReturnType(_method.ReturnType, returnType);
             MethodSignatureDefinitionHelper.DefineParameterTypes(_method.ArgumentTypes, paramTypes);
         }
