@@ -113,6 +113,7 @@ namespace AUE
                     int indentLevel = EditorGUI.indentLevel;
                     EditorGUI.indentLevel = 0;
                     {
+                        headerRect.xMin += 10;
                         headerRect.height = 18f;
                         property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
                     }

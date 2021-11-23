@@ -218,15 +218,10 @@ namespace AUE
 
         private static void DrawParameterInfosFoldout(Rect position, SerializedProperty parameterInfosSP)
         {
-            int indentLevel = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = 0;
-            {
-                Rect foldoutRect = position;
-                foldoutRect.x -= 18;
-                foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
-                parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
-            }
-            EditorGUI.indentLevel = indentLevel;
+            Rect foldoutRect = position;
+            foldoutRect.x -= 3; // Give little more space between foldout and button
+            foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
+            parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
         }
 
         private void UpdateParameterInfos(SerializedProperty aueSP, MethodInfo methodInfo)
