@@ -13,6 +13,7 @@ namespace AUE
         {
             Dynamic,
             Constant,
+            Property,
             Method
         }
 
