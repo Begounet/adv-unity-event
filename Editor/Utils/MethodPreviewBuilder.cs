@@ -107,6 +107,8 @@ namespace AUE
                     return GenerateParameterConstantPreview(customArgumentSP);
                 case AUEMethodParameterInfo.EMode.Method:
                     return GenerateParameterMethodPreview(customArgumentSP);
+                case AUEMethodParameterInfo.EMode.Property:
+                    return GenerateParameterPropertyPreview(customArgumentSP);
                 default:
                     return Undefined;
             }
@@ -157,6 +159,27 @@ namespace AUE
                 return GenerateMethodPreview(methodSP, displayReturnType: false);
             }
             return Undefined;
+        }
+
+        private static string GenerateParameterPropertyPreview(SerializedProperty customArgumentSP)
+        {
+            var propertyPathSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.PropertyPathSPName);
+
+            var sourceModeSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.SourceModeSPName);
+            if ((AUECAProperty.ESourceMode) sourceModeSP.enumValueIndex == AUECAProperty.ESourceMode.Target)
+            {
+                var targetSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.TargetSPName);
+                if (targetSP.objectReferenceValue == null)
+                {
+                    return "<no target>";
+                }
+                return $"{targetSP.objectReferenceValue.name}.{propertyPathSP.stringValue}";
+            }
+            else
+            {
+                var argIdxSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.ArgIndexSPName);
+                return $"{{arg{argIdxSP.intValue}}}.{propertyPathSP.stringValue}";
+            }
         }
     }
 }
