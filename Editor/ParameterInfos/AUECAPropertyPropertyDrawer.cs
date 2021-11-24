@@ -21,6 +21,8 @@ namespace AUE
         private const float PropertyPathActionButtonWidth = 20;
         private const float Space = 2;
         private const float PointWidth = 2;
+        
+        private const string NoneFieldLabel = "None";
 
         private const int ReservedOptionsCount = 1;
         private const int TargetOptionIndex = 0;
@@ -31,6 +33,8 @@ namespace AUE
         private SerializedProperty _propertyPathSP;
         private string[] _sourceOptions;
         private ParameterInfo[] _methodParameters;
+
+        private GUIStyle _actionLabelStyle;
 
         private Vector2 _scrollViewPosition;
         private bool _requiresScrollView;
@@ -49,7 +53,7 @@ namespace AUE
             float height = EditorGUIUtility.singleLineHeight;
             if (_requiresScrollView)
             {
-                height += 10;
+                height += EditorGUIUtility.singleLineHeight;
             }
             return height;
         }
@@ -59,7 +63,15 @@ namespace AUE
             CacheSerializedProperty(property);
 
             float scrollViewWidth = GetScrollViewWidth();
-            _requiresScrollView = (scrollViewWidth > position.width);
+            if (position.width > 0)
+            {
+                bool newRequiresScrollView = (scrollViewWidth > position.width);
+                if (newRequiresScrollView != _requiresScrollView)
+                {
+                    _requiresScrollView = newRequiresScrollView;
+                    RepaintProperty(property);                    
+                }
+            }
 
             if (_requiresScrollView)
             {
@@ -91,8 +103,18 @@ namespace AUE
             }
             width += PointWidth + Space;
             {
-                width += _propertyPath.Length * FieldPropertyWidth;
-                width += Space * (_propertyPath.Length - 1);
+                GUIContent content = new GUIContent();
+                for (int i = 0; i < _propertyPathItems.Count; ++i)
+                {
+                    content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
+                    width += _actionLabelStyle.CalcSize(content).x;
+                    if (i + 1 < _propertyPathItems.Count)
+                    {
+                        width += Space;
+                    }
+
+                }
+                width += PropertyPathActionButtonWidth * 2 + Space;
             }
             return width;
         }
@@ -181,6 +203,8 @@ namespace AUE
             {
                 _methodParameters = null;
             }
+
+            _actionLabelStyle = GUI.skin.button;
         }
 
         private bool IsTargetModeUsed()
@@ -198,7 +222,8 @@ namespace AUE
                 if (parentType != null)
                 {
                     var propertyPathItem = _propertyPathItems[i];
-                    string name = propertyPathItem?.Name ?? "None";
+                    string name = propertyPathItem?.Name ?? NoneFieldLabel;
+                    fieldRect.width = _actionLabelStyle.CalcSize(new GUIContent(name)).x;
                     if (GUI.Button(fieldRect, name))
                     {
                         new MemberInfosSearchDropdown(property, parentType, i, (sp, selected, index) =>
@@ -328,6 +353,18 @@ namespace AUE
                 }
             }
             _propertyPathSP.stringValue = sb.ToString();
+        }
+
+        private void RepaintProperty(SerializedProperty property)
+        {
+            foreach (var item in ActiveEditorTracker.sharedTracker.activeEditors)
+            {
+                if (item.serializedObject == property.serializedObject)
+                {
+                    item.Repaint();
+                    return;
+                }
+            }
         }
     }
 }
