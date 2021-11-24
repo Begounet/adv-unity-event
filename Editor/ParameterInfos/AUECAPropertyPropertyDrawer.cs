@@ -15,13 +15,11 @@ namespace AUE
         public const string ArgIndexSPName = "_argIndex";
         public const string PropertyPathSPName = "_propertyPath";
 
-        private const float SourceModeWidth = 100;
-        private const float TargetWidth = 120;
+        private const float TargetWidth = 150;
         private const float FieldPropertyWidth = 100;
         private const float PropertyPathActionButtonWidth = 20;
         private const float Space = 2;
-        private const float PointWidth = 2;
-        
+
         private const string NoneFieldLabel = "None";
 
         private const int ReservedOptionsCount = 1;
@@ -32,7 +30,7 @@ namespace AUE
         private SerializedProperty _argIndexSP;
         private SerializedProperty _propertyPathSP;
         private string[] _sourceOptions;
-        private ParameterInfo[] _methodParameters;
+        private Type[] _argTypes;
 
         private GUIStyle _actionLabelStyle;
 
@@ -69,7 +67,7 @@ namespace AUE
                 if (newRequiresScrollView != _requiresScrollView)
                 {
                     _requiresScrollView = newRequiresScrollView;
-                    RepaintProperty(property);                    
+                    RepaintProperty(property);
                 }
             }
 
@@ -96,33 +94,39 @@ namespace AUE
 
         private float GetScrollViewWidth()
         {
-            float width = SourceModeWidth + Space;
-            if (IsTargetModeUsed())
-            {
-                width += TargetWidth + Space;
-            }
-            width += PointWidth + Space;
-            {
-                GUIContent content = new GUIContent();
-                for (int i = 0; i < _propertyPathItems.Count; ++i)
-                {
-                    content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
-                    width += _actionLabelStyle.CalcSize(content).x;
-                    if (i + 1 < _propertyPathItems.Count)
-                    {
-                        width += Space;
-                    }
+            GUIContent content = new GUIContent();
 
+            int sourceOptionIndex = FindSourceOptionIndex();
+            content.text = _sourceOptions[sourceOptionIndex];
+
+            float width = 0.0f;
+
+            // Source Mode width
+            width = _actionLabelStyle.CalcSize(content).x + 30 + Space;
+
+            // Property path width
+            for (int i = 0; i < _propertyPathItems.Count; ++i)
+            {
+                content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
+                width += _actionLabelStyle.CalcSize(content).x;
+                if (i + 1 < _propertyPathItems.Count)
+                {
+                    width += Space;
                 }
-                width += PropertyPathActionButtonWidth * 2 + Space;
+
             }
+
+            // Actions width
+            width += PropertyPathActionButtonWidth * 2 + Space;
             return width;
         }
 
         private Rect DrawSourceOptions(ref Rect position)
         {
-            position.width = SourceModeWidth;
             int sourceOptionIndex = FindSourceOptionIndex();
+
+            position.width = _actionLabelStyle.CalcSize(new GUIContent(_sourceOptions[sourceOptionIndex])).x + 30;
+
             int selectedSourceOption = EditorGUI.Popup(position, sourceOptionIndex, _sourceOptions);
             if (sourceOptionIndex != selectedSourceOption)
             {
@@ -134,11 +138,14 @@ namespace AUE
 
         private Rect DrawTargetIFN(ref Rect position)
         {
-            position.width = TargetWidth;
             if (IsTargetModeUsed())
             {
+                float spaceFixerWidth = 15; // Use to counterbalanced an empty space created by the ObjectField
+                position.width = TargetWidth + spaceFixerWidth * 2;
+                position.x -= spaceFixerWidth;
                 EditorGUI.PropertyField(position, _targetSP, GUIContent.none);
                 position.x += position.width + Space;
+                position.width = TargetWidth;
             }
             return position;
         }
@@ -147,7 +154,7 @@ namespace AUE
         {
             if (selectedSourceOption == TargetOptionIndex)
             {
-                _sourceModeSP.enumValueIndex = (int) AUECAProperty.ESourceMode.Target;
+                _sourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Target;
                 _argIndexSP.intValue = -1;
             }
             else
@@ -159,14 +166,15 @@ namespace AUE
 
         private int FindSourceOptionIndex()
         {
+            var sourceMode = (AUECAProperty.ESourceMode)_sourceModeSP.enumValueIndex;
             if (IsTargetModeUsed())
             {
                 return TargetOptionIndex;
             }
-            else // if (sourceMode == AUECAProperty.ESourceMode.Argument)
+            else if (sourceMode == AUECAProperty.ESourceMode.Argument && _argTypes != null)
             {
                 int argIdx = _argIndexSP.intValue;
-                if (argIdx >= 0 && argIdx < _methodParameters.Length)
+                if (argIdx >= 0 && argIdx < _argTypes.Length)
                 {
                     return ReservedOptionsCount + argIdx;
                 }
@@ -187,21 +195,19 @@ namespace AUE
                 _propertyPathItems = BuildPropertyPathItems();
             }
 
-            var aueMethodSP = AUEUtils.FindRootAUEMethod(property);
-            MethodInfo aueMethodMI = AUEUtils.GetMethodInfoFromAUEMethod(aueMethodSP);
-            if (aueMethodMI != null)
+            _argTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
+            if (_argTypes != null)
             {
-                _methodParameters = aueMethodMI.GetParameters();
-                _sourceOptions = new string[ReservedOptionsCount + _methodParameters.Length];
+                _sourceOptions = new string[ReservedOptionsCount + _argTypes.Length];
                 _sourceOptions[TargetOptionIndex] = "Target";
-                for (int i = 0; i < _methodParameters.Length; ++i)
+                for (int i = 0; i < _argTypes.Length; ++i)
                 {
-                    _sourceOptions[i + ReservedOptionsCount] = _methodParameters[i].Name;
+                    _sourceOptions[i + ReservedOptionsCount] = $"{_argTypes[i].Name} arg{i}";
                 }
             }
             else
             {
-                _methodParameters = null;
+                _argTypes = null;
             }
 
             _actionLabelStyle = GUI.skin.button;
@@ -262,11 +268,16 @@ namespace AUE
                 UpdatePropertyPath();
             }
             position.x += position.width + Space;
-            if (GUI.Button(position, "-"))
+
+            EditorGUI.BeginDisabledGroup(_propertyPathItems.Count == 0);
             {
-                _propertyPathItems.RemoveAt(_propertyPathItems.Count - 1);
-                UpdatePropertyPath();
+                if (GUI.Button(position, "-"))
+                {
+                    _propertyPathItems.RemoveAt(_propertyPathItems.Count - 1);
+                    UpdatePropertyPath();
+                }
             }
+            EditorGUI.EndDisabledGroup();
         }
 
         private List<MemberInfo> BuildPropertyPathItems()
@@ -302,10 +313,10 @@ namespace AUE
                     targetType = _targetSP.objectReferenceValue.GetType();
                 }
             }
-            else
+            else if (_argTypes != null)
             {
                 int argIdx = _argIndexSP.intValue;
-                targetType = _methodParameters[argIdx].ParameterType;
+                targetType = _argTypes[argIdx];
             }
             return targetType;
         }

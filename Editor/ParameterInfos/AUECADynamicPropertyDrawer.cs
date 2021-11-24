@@ -33,7 +33,7 @@ namespace AUE
             sourceArgumentIndexSP.intValue = -1;
 
             var castSettingsSP = property.FindPropertyRelative(CastSettingsSPName);
-            Type[] argumentTypes = LoadDynamicTypeFromParent(property);
+            Type[] argumentTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
             for (int i = 0; i < argumentTypes.Length; ++i)
             {
                 if (DoesMethodParameterMatchArgumentType(paramInfoType, argumentTypes[i]) ||
@@ -75,7 +75,7 @@ namespace AUE
             var allCastSettingsSO = new SerializedObject(_allCastSettings);
             _allCastSettingsSP = allCastSettingsSO.FindProperty(AllCastSettingsSettingsSPName);
 
-            Type[] argumentTypes = LoadDynamicTypeFromParent(property);
+            Type[] argumentTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
             _allCastSettingsSP.arraySize = argumentTypes.Length;
             for (int i = 0; i < argumentTypes.Length; ++i)
             {
@@ -107,7 +107,7 @@ namespace AUE
             var paramInfoTypeSP = paramInfoSP.FindPropertyRelative(AUEUtils.ParameterInfoTypeSPName);
             var paramInfoType = SerializableTypeHelper.LoadType(paramInfoTypeSP);
 
-            Type[] argumentTypes = LoadDynamicTypeFromParent(property);
+            Type[] argumentTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
             float height = 0.0f;
             for (int i = 0; i < argumentTypes.Length; ++i)
             {
@@ -119,7 +119,7 @@ namespace AUE
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            Type[] argumentTypes = LoadDynamicTypeFromParent(property);
+            Type[] argumentTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
 
             position.height = EditorGUIUtility.singleLineHeight;
             if (argumentTypes.Length == 0)
@@ -242,18 +242,5 @@ namespace AUE
 
         private static bool DoesMethodParameterMatchArgumentType(Type methodParamType, Type dynamicType)
             => (dynamicType == methodParamType || dynamicType.IsSubclassOf(methodParamType));
-
-        private static Type[] LoadDynamicTypeFromParent(SerializedProperty property)
-        {
-            var aueRootSP = AUEUtils.FindAUERootInParent(property);
-            var argumentTypesSP = aueRootSP.FindPropertyRelative(AUEUtils.ArgumentTypesSPName);
-            Type[] types = new Type[argumentTypesSP.arraySize];
-            for (int i = 0; i < argumentTypesSP.arraySize; ++i)
-            {
-                var argumentTypeSP = argumentTypesSP.GetArrayElementAtIndex(i);
-                types[i] = SerializableTypeHelper.LoadType(argumentTypeSP);
-            }
-            return types;
-        }
     }
 }

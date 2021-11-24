@@ -357,5 +357,30 @@ namespace AUE
             }
             return bindingFlags;
         }
+
+        /// <summary>
+        /// Load parameters from the AUE root
+        /// </summary>
+        public static Type[] LoadMethodDynamicParameterTypes(SerializedProperty property)
+        {
+            var aueRootSP = FindAUERootInParent(property);
+            var argumentTypesSP = aueRootSP.FindPropertyRelative(ArgumentTypesSPName);
+            Type[] types = new Type[argumentTypesSP.arraySize];
+            for (int i = 0; i < argumentTypesSP.arraySize; ++i)
+            {
+                var argumentTypeSP = argumentTypesSP.GetArrayElementAtIndex(i);
+                types[i] = SerializableTypeHelper.LoadType(argumentTypeSP);
+            }
+            return types;
+        }
+
+        public static void SetAUEMethodDirty(SerializedProperty aueMethodSP)
+        {
+            var method = aueMethodSP.GetTarget<AUESimpleMethod>();
+            if (method != null)
+            {
+                method.SetDirty();
+            }
+        }
     }
 }
