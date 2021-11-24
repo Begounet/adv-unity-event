@@ -64,5 +64,10 @@ namespace AUE
         }
 
         bool IAUECustomArgument.IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType) => true;
+
+        public void SetDirty()
+        {
+            _propertyCache = null;
+        }
     }
 }

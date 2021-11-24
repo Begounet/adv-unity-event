@@ -38,10 +38,44 @@ namespace AUE
         private bool _requiresScrollView;
         private string[] _propertyPath;
 
+        private AUECAProperty _targetProperty;
         private List<MemberInfo> _propertyPathItems;
 
         public static void Initialize(SerializedProperty property)
         {
+        }
+
+        private void CacheSerializedProperty(SerializedProperty property)
+        {
+            _targetProperty = property.GetTarget<AUECAProperty>();
+
+            _sourceModeSP = property.FindPropertyRelative(SourceModeSPName);
+            _targetSP = property.FindPropertyRelative(TargetSPName);
+            _argIndexSP = property.FindPropertyRelative(ArgIndexSPName);
+            _propertyPathSP = property.FindPropertyRelative(PropertyPathSPName);
+            _propertyPath = (!string.IsNullOrEmpty(_propertyPathSP.stringValue) ? _propertyPathSP.stringValue.Split('.') : new string[0]);
+
+            if (_propertyPathItems == null)
+            {
+                _propertyPathItems = BuildPropertyPathItems();
+            }
+
+            _argTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
+            if (_argTypes != null)
+            {
+                _sourceOptions = new string[ReservedOptionsCount + _argTypes.Length];
+                _sourceOptions[TargetOptionIndex] = "Target";
+                for (int i = 0; i < _argTypes.Length; ++i)
+                {
+                    _sourceOptions[i + ReservedOptionsCount] = $"{_argTypes[i].Name} arg{i}";
+                }
+            }
+            else
+            {
+                _argTypes = null;
+            }
+
+            _actionLabelStyle = GUI.skin.button;
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -105,19 +139,23 @@ namespace AUE
             width = _actionLabelStyle.CalcSize(content).x + 30 + Space;
 
             // Property path width
-            for (int i = 0; i < _propertyPathItems.Count; ++i)
+            if (_propertyPathItems != null)
             {
-                content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
-                width += _actionLabelStyle.CalcSize(content).x;
-                if (i + 1 < _propertyPathItems.Count)
+                for (int i = 0; i < _propertyPathItems.Count; ++i)
                 {
-                    width += Space;
+                    content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
+                    width += _actionLabelStyle.CalcSize(content).x;
+                    if (i + 1 < _propertyPathItems.Count)
+                    {
+                        width += Space;
+                    }
+
                 }
 
+                // Actions width
+                width += PropertyPathActionButtonWidth * 2 + Space;
             }
 
-            // Actions width
-            width += PropertyPathActionButtonWidth * 2 + Space;
             return width;
         }
 
@@ -143,7 +181,16 @@ namespace AUE
                 float spaceFixerWidth = 15; // Use to counterbalanced an empty space created by the ObjectField
                 position.width = TargetWidth + spaceFixerWidth * 2;
                 position.x -= spaceFixerWidth;
-                EditorGUI.PropertyField(position, _targetSP, GUIContent.none);
+                
+                EditorGUI.BeginChangeCheck();
+                {
+                    EditorGUI.PropertyField(position, _targetSP, GUIContent.none);
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    SetDirty();
+                }
+
                 position.x += position.width + Space;
                 position.width = TargetWidth;
             }
@@ -162,6 +209,7 @@ namespace AUE
                 _sourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Argument;
                 _argIndexSP.intValue = selectedSourceOption - ReservedOptionsCount;
             }
+            SetDirty();
         }
 
         private int FindSourceOptionIndex()
@@ -182,37 +230,6 @@ namespace AUE
             return 0;
         }
 
-        private void CacheSerializedProperty(SerializedProperty property)
-        {
-            _sourceModeSP = property.FindPropertyRelative(SourceModeSPName);
-            _targetSP = property.FindPropertyRelative(TargetSPName);
-            _argIndexSP = property.FindPropertyRelative(ArgIndexSPName);
-            _propertyPathSP = property.FindPropertyRelative(PropertyPathSPName);
-            _propertyPath = (!string.IsNullOrEmpty(_propertyPathSP.stringValue) ? _propertyPathSP.stringValue.Split('.') : new string[0]);
-
-            if (_propertyPathItems == null)
-            {
-                _propertyPathItems = BuildPropertyPathItems();
-            }
-
-            _argTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
-            if (_argTypes != null)
-            {
-                _sourceOptions = new string[ReservedOptionsCount + _argTypes.Length];
-                _sourceOptions[TargetOptionIndex] = "Target";
-                for (int i = 0; i < _argTypes.Length; ++i)
-                {
-                    _sourceOptions[i + ReservedOptionsCount] = $"{_argTypes[i].Name} arg{i}";
-                }
-            }
-            else
-            {
-                _argTypes = null;
-            }
-
-            _actionLabelStyle = GUI.skin.button;
-        }
-
         private bool IsTargetModeUsed()
         {
             var sourceMode = (AUECAProperty.ESourceMode)_sourceModeSP.enumValueIndex;
@@ -221,6 +238,11 @@ namespace AUE
 
         private void DrawPropertyPath(ref Rect position, SerializedProperty property)
         {
+            if (_propertyPathItems == null)
+            {
+                return;
+            }
+
             Rect fieldRect = new Rect(position.x, position.y, FieldPropertyWidth, position.height);
             Type parentType = GetTargetType();
             for (int i = 0; i < _propertyPathItems.Count; ++i)
@@ -237,6 +259,7 @@ namespace AUE
                             SetPropertyPathItem((int)index, selected);
                             UpdatePropertyPath();
                             property.serializedObject.ApplyModifiedProperties();
+                            GUI.changed = true;
                         }).Show(fieldRect);
                     }
                     fieldRect.x += fieldRect.width + Space;
@@ -364,6 +387,7 @@ namespace AUE
                 }
             }
             _propertyPathSP.stringValue = sb.ToString();
+            SetDirty();
         }
 
         private void RepaintProperty(SerializedProperty property)
@@ -377,6 +401,8 @@ namespace AUE
                 }
             }
         }
+
+        private void SetDirty() => _targetProperty.SetDirty();
     }
 }
 

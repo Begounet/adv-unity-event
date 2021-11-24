@@ -92,7 +92,7 @@ namespace AUE
                 UpdateMethodName(property, null);
                 UpdateParameterInfos(property, null);
                 AUEMethodDatabaseUtils.UpdateMethodDatabase(AUEUtils.FindAUERootInParent(property));
-                SetMethodDirty(property);
+                AUEUtils.SetAUEMethodDirty(property);
             }
 
             if (targetSP.objectReferenceValue != null)
@@ -150,7 +150,7 @@ namespace AUE
                             UpdateParameterInfos(property, null);
                         }
                         AUEMethodDatabaseUtils.UpdateMethodDatabase(AUEUtils.FindAUERootInParent(property));
-                        SetMethodDirty(property);
+                        AUEUtils.SetAUEMethodDirty(property);
 
                         GUI.changed = true;
                     }
@@ -259,15 +259,6 @@ namespace AUE
             customArgumentSP.managedReferenceValue = null;
 
             AUEMethodParameterInfoPropertyDrawer.InitializeCustomArgument(parameterInfoSP);
-        }
-
-        private void SetMethodDirty(SerializedProperty property)
-        {
-            var method = property.GetTarget<AUESimpleMethod>();
-            if (method != null)
-            {
-                method.SetDirty();
-            }
         }
 
         private PropertyMetaData TryGetTempMetaData(SerializedProperty property)
