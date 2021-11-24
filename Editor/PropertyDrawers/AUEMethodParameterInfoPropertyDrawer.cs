@@ -99,6 +99,9 @@ namespace AUE
                 case EMode.Method:
                     refValue = new AUECAMethodReference();
                     break;
+                case EMode.Property:
+                    refValue = new AUECAProperty();
+                    break;
             }
             customArgumentSP.managedReferenceValue = refValue;
             switch (mode)
@@ -111,6 +114,9 @@ namespace AUE
                     break;
                 case EMode.Method:
                     AUECAMethodReferencePropertyDrawer.Initialize(customArgumentSP);
+                    break;
+                case EMode.Property:
+                    AUECAPropertyPropertyDrawer.Initialize(customArgumentSP);
                     break;
             }
         }

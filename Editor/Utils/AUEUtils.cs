@@ -298,6 +298,30 @@ namespace AUE
             return null;
         }
 
+        public static SerializedProperty FindRootAUEMethod(SerializedProperty property)
+        {
+            SerializedProperty parent = property;
+            while (parent != null)
+            {
+                if (IsProbablyAUEMethod(parent))
+                {
+                    return parent;
+                }
+                parent = parent.GetParent();
+                
+            }
+            return null;
+        }
+
+        public static bool IsProbablyAUEMethod(SerializedProperty property)
+        {
+            // If there is theses properties, it is probably an AUE method
+            return property.FindPropertyRelative(MethodNameSPName) != null &&
+                property.FindPropertyRelative(TargetSPName) != null &&
+                property.FindPropertyRelative(ReturnTypeSPName) != null &&
+                property.FindPropertyRelative(ParameterInfosSPName) != null;
+        }
+
         public static string MakeHumanDisplayType(Type t)
         {
             if (t == null)

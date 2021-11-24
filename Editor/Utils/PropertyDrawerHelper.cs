@@ -32,6 +32,10 @@ namespace AUE
         public static PropertyDrawer GetPropertyDrawer(this SerializedProperty sp)
         {
             var pds = GetPropertyDrawers(sp);
+            if (pds == null)
+            {
+                return null;
+            }
             return (pds.Count > 0 ? pds[0] : null);
         }
 
