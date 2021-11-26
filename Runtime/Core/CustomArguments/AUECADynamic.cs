@@ -19,7 +19,7 @@ namespace AUE
             _sourceArgumentIndex = sourceArgumentIndex;
         }
 
-        object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args)
+        object IAUECustomArgument.GetArgumentValue(IAUEMethod aueMethod, Type ParameterType, object[] args)
         {
             if (_sourceArgumentIndex >= 0 && _sourceArgumentIndex <= args.Length)
             {
@@ -32,8 +32,6 @@ namespace AUE
             }
             return null;
         }
-
-        bool IAUECustomArgument.IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType) => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool DoesParameterTypeMatch(object arg, Type parameterType)

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 namespace AUE
@@ -26,7 +29,7 @@ namespace AUE
 
         private CAPropertyCache _propertyCache = null;
 
-        object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args)
+        object IAUECustomArgument.GetArgumentValue(IAUEMethod aueMethod, Type ParameterType, object[] args)
         {
             object src = null;
             switch (_sourceMode)
@@ -63,11 +66,38 @@ namespace AUE
             _propertyCache.BuildCache(targetType, _propertyPath);
         }
 
-        bool IAUECustomArgument.IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType) => true;
-
         public void SetDirty()
         {
             _propertyCache = null;
         }
+
+#if UNITY_EDITOR
+        internal void RegisterForAOT(IMethodArgumentsOwner argumentTypesOwner, HashSet<MemberInfo> outPropertyPathMembers)
+        {
+            Type targetType = null;
+            switch (_sourceMode)
+            {
+                case ESourceMode.Target:
+                    if (_target != null)
+                    {
+                        targetType = _target.GetType();
+                    }
+                    break;
+                case ESourceMode.Argument:
+                    if (_argIndex >= 0)
+                    {
+                        targetType = argumentTypesOwner.GetArgumentTypes()
+                            .Skip(_argIndex)
+                            .FirstOrDefault();
+                    }
+                    break;
+            }
+
+            if (targetType != null)
+            {
+                AOTHelper.RegisterMemberInfosInPropertyPath(outPropertyPathMembers, targetType, _propertyPath);
+            }
+        }
+#endif
     }
 }

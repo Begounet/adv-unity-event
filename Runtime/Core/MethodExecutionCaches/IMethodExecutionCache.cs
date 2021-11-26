@@ -2,6 +2,6 @@ namespace AUE
 {
     internal interface IMethodExecutionCache
     {
-        internal object Invoke(IMethodDatabaseOwner methodDbOwner, params object[] args);
+        internal object Invoke(IAUEMethod aueMethod, params object[] args);
     }
 }

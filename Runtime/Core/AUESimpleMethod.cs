@@ -13,6 +13,7 @@ namespace AUE
 #if UNITY_EDITOR
         public static bool IsRegisteringMethods = false;
         public static HashSet<MethodInfo> RegisteredMethods = new HashSet<MethodInfo>();
+        public static HashSet<MemberInfo> RegisteredMembers = new HashSet<MemberInfo>();
 
         [SerializeField]
         private byte _id;
@@ -60,7 +61,7 @@ namespace AUE
 
         IMethodExecutionCache _cache;
 
-        internal object Invoke(IMethodDatabaseOwner methodDbOwner, params object[] args)
+        internal object Invoke(IAUEMethod aueMethod, params object[] args)
         {
             if (!IsValid())
             {
@@ -77,7 +78,7 @@ namespace AUE
                 Cache();
             }
 
-            return _cache.Invoke(methodDbOwner, args);
+            return _cache.Invoke(aueMethod, args);
 
 #if AUE_SAFE
             }
@@ -107,7 +108,7 @@ namespace AUE
 #if UNITY_EDITOR
             if (IsRegisteringMethods)
             {
-                RegisterMethodForAOT();
+                RegisterForAOT();
             }
 #endif
         }
@@ -180,7 +181,7 @@ namespace AUE
 #endif
 
 #if UNITY_EDITOR
-        private void RegisterMethodForAOT()
+        protected virtual void RegisterForAOT()
         {
             MethodInfo mi = GetSafeMethod();
             if (mi != null)

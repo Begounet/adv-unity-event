@@ -7,7 +7,6 @@ namespace AUE
 {
     public interface IAUECustomArgument
     {
-        internal object GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args);
-        internal bool IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType);
+        internal object GetArgumentValue(IAUEMethod aueMethod, Type ParameterType, object[] args);
     }
 }
