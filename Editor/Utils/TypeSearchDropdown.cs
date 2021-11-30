@@ -16,6 +16,7 @@ namespace AUE
         public TypeSearchDropdown(AdvancedDropdownState state)
             : base(state)
         {
+            minimumSize = new Vector2(200, 300);
         }
 
         protected override AdvancedDropdownItem BuildRoot()
@@ -46,10 +47,15 @@ namespace AUE
             }
 
             _typesCache = new Dictionary<Assembly, Type[]>();
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var assembly in assemblies)
+            var aueSettings = AUESettingsProvider.GetOrCreateSettings<AUESettings>();
+            var assemblyReferences = aueSettings.TypesAssemblies;
+            foreach (var assemblyRef in assemblyReferences)
             {
-                _typesCache.Add(assembly, assembly.GetTypes());
+                var assembly = assemblyRef.Assembly;
+                if (assembly != null && !_typesCache.ContainsKey(assembly))
+                {
+                    _typesCache.Add(assembly, assembly.GetTypes());
+                }
             }
         }
 

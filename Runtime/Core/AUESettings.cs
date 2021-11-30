@@ -1,11 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace AUE
 {
     public class AUESettings : ScriptableObject
     {
+        [Header("Editor")]
+
+        [SerializeField]
+        [Tooltip("Type searchs for some editor fields will include only types inside this assembly")]
+        private AssemblyReference[] _typesAssemblies = new AssemblyReference[] 
+        {
+            new AssemblyReference(typeof(string)),
+            new AssemblyReference(typeof(UnityEngine.Object))
+        };
+        public AssemblyReference[] TypesAssemblies => _typesAssemblies;
+
+
         [Header("Upgrader")]
 
         [SerializeField]

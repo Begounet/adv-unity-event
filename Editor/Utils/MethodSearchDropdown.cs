@@ -13,9 +13,17 @@ namespace AUE
     {
         public delegate void MethodSelectionDelegate(SerializedProperty property, InvokeInfo selectedInvokeInfo);
 
+        private class ItemMetaData
+        {
+            public TargetInvokeInfo TargetInvokeInfo { get; set; }
+            public MethodMetaData MethodMetaData { get; set; }
+        }
+
         private TargetInvokeInfo[] _targetInvokeInfos;
         private MethodSelectionDelegate _methodSelectedIndexCallback;
         private SerializedProperty _property;
+
+        private Dictionary<int, ItemMetaData> _itemMetaData;
 
         public MethodSearchDropdown(SerializedProperty property, TargetInvokeInfo[] invokeInfos, MethodSelectionDelegate methodSelectedIndexCallback)
              : base(new AdvancedDropdownState())
@@ -25,37 +33,30 @@ namespace AUE
             _methodSelectedIndexCallback = methodSelectedIndexCallback;
 
             minimumSize = new Vector2(minimumSize.x, 400);
+
+            _itemMetaData = new Dictionary<int, ItemMetaData>();
         }
 
         protected override void ItemSelected(AdvancedDropdownItem item)
         {
-            if (item.id == -1)
+            if (item.id == -1 || !_itemMetaData.TryGetValue(item.id, out ItemMetaData selectedItem))
             {
                 _methodSelectedIndexCallback.Invoke(_property, null);
+                return;
             }
 
-            for (int i = 0; i < _targetInvokeInfos.Length; ++i)
+            _methodSelectedIndexCallback.Invoke(_property, new InvokeInfo()
             {
-                var targetInvokeInfo = _targetInvokeInfos[i];
-                for (int j = 0; j < targetInvokeInfo.Methods.Count; ++j)
-                {
-                    var methodMetaData = targetInvokeInfo.Methods[j];
-                    if (methodMetaData.GetHashCode() == item.id)
-                    {
-                        _methodSelectedIndexCallback.Invoke(_property, new InvokeInfo()
-                        {
-                            Target = targetInvokeInfo.Target,
-                            MethodMeta = methodMetaData
-                        });
-                    }
-                }
-            }
+                Target = selectedItem.TargetInvokeInfo.Target,
+                MethodMeta = selectedItem.MethodMetaData
+            });
         }
 
         protected override AdvancedDropdownItem BuildRoot()
         {
             var root = new AdvancedDropdownItem("root");
 
+            int metaIdx = 0;
             for (int i = 0; i < _targetInvokeInfos.Length; ++i)
             {
                 var targetInvokeInfo = _targetInvokeInfos[i];
@@ -86,21 +87,21 @@ namespace AUE
                             declaringTypeGroupItem.AddSeparator();
                         }
 
-                        AddMethodsToGroup(declaringTypeGroupItem, methodGroups);
+                        AddMethodsToGroup(targetInvokeInfo, declaringTypeGroupItem, methodGroups, ref metaIdx);
                         if (methodsCount > 0 && settersCount > 0)
                         {
                             declaringTypeGroupItem.AddSeparator();
                             declaringTypeGroupItem.AddChild(new AdvancedDropdownItem("Setters") { enabled = false });
                             declaringTypeGroupItem.AddSeparator();
                         }
-                        AddMethodsToGroup(declaringTypeGroupItem, setterGroups);
+                        AddMethodsToGroup(targetInvokeInfo, declaringTypeGroupItem, setterGroups, ref metaIdx);
                         if ((methodsCount > 0 || settersCount > 0) && gettersCount > 0)
                         {
                             declaringTypeGroupItem.AddSeparator();
                             declaringTypeGroupItem.AddChild(new AdvancedDropdownItem("Getters") { enabled = false });
                             declaringTypeGroupItem.AddSeparator();
                         }
-                        AddMethodsToGroup(declaringTypeGroupItem, getterGroups);
+                        AddMethodsToGroup(targetInvokeInfo, declaringTypeGroupItem, getterGroups, ref metaIdx);
                     }
 
                     root.AddChild(targetInvokeInfoItem);
@@ -113,13 +114,15 @@ namespace AUE
             return root;
         }
 
-        private void AddMethodsToGroup(AdvancedDropdownItem groupItem, IEnumerable<MethodMetaData> methodGroups)
+        private void AddMethodsToGroup(TargetInvokeInfo targetInvokeInfo, AdvancedDropdownItem groupItem, IEnumerable<MethodMetaData> methodGroups, ref int metaIdx)
         {
             foreach (var mmd in methodGroups)
             {
-                groupItem.AddChild(new AdvancedDropdownItem(mmd.DisplayName)
+                groupItem.AddChild(new AdvancedDropdownItem(mmd.DisplayName) { id = metaIdx });
+                _itemMetaData.Add(metaIdx++, new ItemMetaData()
                 {
-                    id = mmd.GetHashCode()
+                    TargetInvokeInfo = targetInvokeInfo,
+                    MethodMetaData = mmd,
                 });
             }
         }

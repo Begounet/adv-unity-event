@@ -27,6 +27,11 @@ namespace AUE
                     isNextPropertyArrayIndex = false;
                     int arrayIndex = ParseArrayIndex(propName);
                     var targetAsArray = (IList)target;
+                    if (arrayIndex < 0 || arrayIndex >= targetAsArray.Count)
+                    {
+                        return default(T);
+                    }
+
                     target = targetAsArray[arrayIndex];
                 }
                 else

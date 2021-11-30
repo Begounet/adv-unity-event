@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7d1cd85717b04f4e84543587cf9e66a, type: 3}
   m_Name: AdvUnityEvent Settings
   m_EditorClassIdentifier: 
+  _typesAssemblies:
+  - _assemblyName: mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
+  - _assemblyName: UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
   _sceneDirectories:
   - Assets/Scenes
   _prefabDirectories:
