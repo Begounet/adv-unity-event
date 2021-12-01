@@ -91,7 +91,7 @@ namespace AUE
 
         private void InitReorderableList(SerializedProperty property)
         {
-            if (_reorderableList != null)
+            if (_reorderableList != null && _reorderableList.list != null)
             {
                 return;
             }
