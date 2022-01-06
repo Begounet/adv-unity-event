@@ -4,6 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+#if DEVELOPMENT_BUILD && AUE_SAFE
+using UnityEngine.Assertions;
+#endif
 
 namespace AUE
 {
@@ -19,11 +22,20 @@ namespace AUE
         private byte _id;
 #endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// Useful to find a method from code breakpoint to Unity scene.
+        /// Use a string property finder to match the identifier.
+        /// </summary>
+        [SerializeField]
+        private string _identifier;
+#endif
+
         /// <summary>
         /// Contains the type when the method is static
         /// </summary>
         [SerializeField]
-        private SerializableType _staticType;
+        private SerializableType _staticType = new SerializableType();
 
         [SerializeField]
         protected UnityEngine.Object _target;
@@ -57,7 +69,7 @@ namespace AUE
         protected AUEMethodParameterInfo[] _parameterInfos;
         internal AUEMethodParameterInfo[] ParameterInfos => _parameterInfos;
 
-        public bool IsStatic => _staticType.IsValidType;
+        public bool IsStatic => (_staticType?.IsValidType ?? false);
 
         IMethodExecutionCache _cache;
 
@@ -93,7 +105,7 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
-            => (_target != null && !string.IsNullOrWhiteSpace(_methodName));
+            => ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
 
         internal void SetDirty()
         {
@@ -106,6 +118,11 @@ namespace AUE
         {
             Cache(safeAccess: true);
 #if UNITY_EDITOR
+            if (string.IsNullOrEmpty(_identifier))
+            {
+                _identifier = Guid.NewGuid().ToString();
+            }
+
             if (IsRegisteringMethods)
             {
                 RegisterForAOT();
@@ -130,14 +147,14 @@ namespace AUE
 
         internal MethodInfo GetFastMethod()
         {
-            Type targetType = GetTargeType();
+            Type targetType = GetTargetType();
             Type[] methodParameterTypes = GenerateMethodParameterTypes();
             return targetType.GetMethod(_methodName, methodParameterTypes);
         }
 
         internal MethodInfo GetSafeMethod()
         {
-            Type targetType = GetTargeType();
+            Type targetType = GetTargetType();
             if (targetType == null)
             {
                 return null;
@@ -147,25 +164,43 @@ namespace AUE
             return targetType.GetMethod(_methodName, parameterTypes);
         }
 
-        private Type GetTargeType()
+        private Type GetTargetType()
         {
-            return (IsStatic ? _staticType.Type : _target.GetType());
+#if AUE_SAFE
+            try
+            {
+                if (!IsValid())
+                {
+                    return null;
+                }
+#endif
+                return (IsStatic ? _staticType.Type : _target.GetType());
+#if AUE_SAFE
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                return null;
+            }
+#endif
         }
 
-#if UNITY_DEVELOPMENT_BUILD && AUE_SAFE
+#if DEVELOPMENT_BUILD && AUE_SAFE
         internal MethodInfo GetSafeVerboseMethod()
         {
             try
             {
-                Type targetType = GetTargeType();
+                Type targetType = GetTargetType();
                 if (targetType == null)
                 {
                     return null;
                 }
 
-                Type[] parameterTypes = _parameterInfos.Select((pi) => pi.Type).ToArray();
+                Type[] parameterTypes = _parameterInfos
+                    .Select((pi) => pi.ParameterType).ToArray();
+
                 MethodInfo mi = targetType.GetMethod(_methodName, parameterTypes);
-                if (_returnType.IsValidType && mi.ReturnType != _returnType.Type)
+                if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
                     throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
                 }
@@ -173,7 +208,7 @@ namespace AUE
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Could not get method {_methodName} from class {GetTargeType()?.FullName ?? "unknown"} from assembly {GetTargeType()?.Assembly.ToString() ?? "unknown"}");
+                Debug.LogError($"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}");
                 Debug.LogException(ex);
                 return null;                    
             }

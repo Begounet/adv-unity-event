@@ -18,7 +18,7 @@ namespace AUE
             _cachedParameters = new object[_aueMethod.ParameterInfos.Length];
 
             _cachedMethodInfo =
-#if AUE_SAFE && UNITY_DEVELOPMENT_BUILD
+#if AUE_SAFE && DEVELOPMENT_BUILD
                 _aueMethod.GetSafeVerboseMethod();
 #elif AUE_SAFE
                 _aueMethod.GetSafeMethod();
