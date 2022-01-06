@@ -149,24 +149,24 @@ namespace AUE
             foreach (MethodInfo mi in AUESimpleMethod.RegisteredMethods)
             {
                 var miField = new RegisterableMethod(mi);
-                RegisterField(registeredTypes, mi.ReflectedType, miField);
+                RegisterField(registeredTypes, mi.DeclaringType, miField);
             }
             foreach (MemberInfo mi in AUESimpleMethod.RegisteredMembers)
             {
                 var miField = new RegisterableMember(mi);
-                RegisterField(registeredTypes, mi.ReflectedType, miField);
+                RegisterField(registeredTypes, mi.DeclaringType, miField);
             }
             return registeredTypes;
         }
 
-        private static void RegisterField(Dictionary<Assembly, Dictionary<Type, HashSet<IRegisterableField>>> registeredTypes, Type reflectedType, IRegisterableField miField)
+        private static void RegisterField(Dictionary<Assembly, Dictionary<Type, HashSet<IRegisterableField>>> registeredTypes, Type declaringType, IRegisterableField miField)
         {
-            if (registeredTypes.TryGetValue(reflectedType.Assembly, out Dictionary<Type, HashSet<IRegisterableField>> typesList))
+            if (registeredTypes.TryGetValue(declaringType.Assembly, out Dictionary<Type, HashSet<IRegisterableField>> typesList))
             {
-                if (!typesList.TryGetValue(reflectedType, out HashSet<IRegisterableField> fields))
+                if (!typesList.TryGetValue(declaringType, out HashSet<IRegisterableField> fields))
                 {
                     fields = new HashSet<IRegisterableField>();
-                    typesList.Add(reflectedType, fields);
+                    typesList.Add(declaringType, fields);
                 }
 
                 if (!fields.Contains(miField))
@@ -179,8 +179,8 @@ namespace AUE
                 typesList = new Dictionary<Type, HashSet<IRegisterableField>>();
                 var miHash = new HashSet<IRegisterableField>();
                 miHash.Add(miField);
-                typesList.Add(reflectedType, miHash);
-                registeredTypes.Add(reflectedType.Assembly, typesList);
+                typesList.Add(declaringType, miHash);
+                registeredTypes.Add(declaringType.Assembly, typesList);
             }
         }
 
