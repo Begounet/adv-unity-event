@@ -12,7 +12,7 @@ By using the Upgrader, you can transfer the data from the `UnityEvent` to the `A
 
 ## How to
 
-**Ensure to have commit everything before starting, since a wrong manipulation could mean to lost all your events data without being able to back up. The operation is long and can be confused.**
+**Ensure to have commit everything before starting, since a wrong manipulation could mean to lost all your events data without being able to back up. The operation is long and can be confusing.**
 
 There is 3 big steps:
 
