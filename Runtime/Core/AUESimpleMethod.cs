@@ -4,9 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-#if DEVELOPMENT_BUILD && AUE_SAFE
-using UnityEngine.Assertions;
-#endif
 
 namespace AUE
 {
