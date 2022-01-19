@@ -113,7 +113,6 @@ namespace AUE
 
         public void OnAfterDeserialize()
         {
-            Cache(safeAccess: true);
 #if UNITY_EDITOR
             if (string.IsNullOrEmpty(_identifier))
             {
