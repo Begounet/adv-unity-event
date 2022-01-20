@@ -150,26 +150,41 @@ namespace AUE
             }
         }
 
-        private static IConstantValue TryCreateDefaultManagedReferenceValue(Type argumentType)
+        private static object TryCreateDefaultManagedReferenceValue(Type argumentType)
         {
             try
             {
+                bool isArray = argumentType.IsArray;
+                Type elementType = (isArray ? argumentType.GetElementType() : argumentType);
+
                 foreach (var constantValueType in StandardConstantValues.ConstantMapping)
                 {
-                    if (constantValueType.Key.IsAssignableFrom(argumentType))
+                    if (constantValueType.Key.IsAssignableFrom(elementType))
                     {
-                        return (IConstantValue)Activator.CreateInstance(constantValueType.Value);
+                        return CreateInstanceOrEmptyArray(constantValueType.Value, isArray);
                     }
                 }
 
                 IConstantValue gObj = new StandardConstantValues.GenericObject();
-                gObj.Value = Activator.CreateInstance(argumentType);
+                gObj.Value = CreateInstanceOrEmptyArray(elementType, isArray);
                 return gObj;
             }
             catch (Exception ex)
             {
                 Debug.LogError(ex);
                 return null;
+            }
+        }
+
+        private static object CreateInstanceOrEmptyArray(Type type, bool isArray)
+        {
+            if (isArray)
+            {
+                return Array.CreateInstance(type, 0);
+            }
+            else
+            {
+                return Activator.CreateInstance(type);
             }
         }
     }
