@@ -11,6 +11,7 @@ namespace AUE
     public static class MethodPreviewBuilder
     {
         private const string Undefined = "<undefined>";
+        private const string Error = "<error>";
 
         public static string GenerateMethodDisplayName(MethodInfo methodInfo,
             bool displayReturnType = true,
@@ -97,6 +98,11 @@ namespace AUE
         private static string GenerateParameterPreview(SerializedProperty parameterInfoSP)
         {
             var customArgumentSP = parameterInfoSP.FindPropertyRelative(AUEUtils.CustomArgumentSPName);
+            if (string.IsNullOrEmpty(customArgumentSP.managedReferenceFullTypename))
+            {
+                return Error;
+            }
+
             var modeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ModeSPName);
             var mode = (AUEMethodParameterInfo.EMode)modeSP.intValue;
             switch (mode)
