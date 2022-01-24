@@ -170,8 +170,17 @@ namespace AUE
         private static string GenerateParameterPropertyPreview(SerializedProperty customArgumentSP)
         {
             var propertyPathSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.PropertyPathSPName);
+            if (propertyPathSP == null)
+            {
+                return Error;
+            }
 
             var sourceModeSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.SourceModeSPName);
+            if (sourceModeSP == null)
+            {
+                return Error;
+            }
+
             if ((AUECAProperty.ESourceMode) sourceModeSP.enumValueIndex == AUECAProperty.ESourceMode.Target)
             {
                 var targetSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.TargetSPName);
