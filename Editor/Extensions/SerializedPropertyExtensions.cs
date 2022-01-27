@@ -167,5 +167,8 @@ namespace AUE
             path = path.Remove(path.LastIndexOf('.'));
             return property.serializedObject.FindProperty(path);
         }
+
+        public static bool HasProperty(this SerializedProperty property, string propertyName) 
+            => (property.FindPropertyRelative(propertyName) != null);
     }
 }

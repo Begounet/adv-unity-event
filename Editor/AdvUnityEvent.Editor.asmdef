@@ -2,7 +2,8 @@
     "name": "AdvUnityEvent.Editor",
     "rootNamespace": "AUE",
     "references": [
-        "GUID:98443e9e1b5c13e438be4f8b5742d20b"
+        "GUID:98443e9e1b5c13e438be4f8b5742d20b",
+        "GUID:478a2357cc57436488a56e564b08d223"
     ],
     "includePlatforms": [
         "Editor"
@@ -13,6 +14,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.editorcoroutines",
+            "expression": "",
+            "define": ""
+        }
+    ],
     "noEngineReferences": false
 }
