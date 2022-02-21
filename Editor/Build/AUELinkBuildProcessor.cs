@@ -7,6 +7,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.UnityLinker;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace AUE
 {
@@ -90,11 +91,14 @@ namespace AUE
 
 
         public int callbackOrder => 0;
-
         public string LinkFilePath => Application.dataPath + "/../Library/AUE.Generated/link.xml";
+
+        private bool _hasMethodBeenRegistered = false;
 
         public string GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data)
         {
+            Assert.IsTrue(_hasMethodBeenRegistered, $"Build pipeline is messed up. The link.xml ('{LinkFilePath}') file generation comes too early. Not been able to register AUE methods.");
+
             var registeredTypes = GetAllAUERegistered();
 
             string xmlContent = BuildLinkXmlFileContent(registeredTypes);
@@ -198,6 +202,8 @@ namespace AUE
             AUESimpleMethod.RegisteredMethods.Clear();
             AUESimpleMethod.RegisteredMembers.Clear();
             AUESimpleMethod.IsRegisteringMethods = true;
+
+            _hasMethodBeenRegistered = true;
         }
 
         public void OnPostprocessBuild(BuildReport report)
@@ -207,6 +213,8 @@ namespace AUE
             // Release memory
             AUESimpleMethod.RegisteredMethods.Clear();
             AUESimpleMethod.RegisteredMembers.Clear();
+
+            _hasMethodBeenRegistered = false;
         }
     }
 }
