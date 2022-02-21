@@ -20,16 +20,16 @@ namespace AUE
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            Rect fieldRect = EditorGUI.PrefixLabel(position, label);
             var assemblyNameSP = property.FindPropertyRelative(AssemblyNameSPName);
             Assembly assembly = AssemblyReference.FindAssemblyByName(assemblyNameSP.stringValue);
-            if (EditorGUI.DropdownButton(fieldRect, new GUIContent(assembly?.GetName().Name ?? "<undefined>"), FocusType.Keyboard))
+            GUIContent name = new GUIContent((assembly?.GetName().Name ?? "<undefined>"));
+            if (EditorGUI.DropdownButton(position, name, FocusType.Keyboard))
             {
                 new AssemblySearchDropdown(property, (property, assembly) =>
                 {
                     _assemblyChangesQueue.Add(property.propertyPath, assembly);
                     GUI.changed = true;
-                }).Show(fieldRect);
+                }).Show(position);
             }
 
             if (_assemblyChangesQueue != null)

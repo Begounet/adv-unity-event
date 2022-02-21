@@ -1,7 +1,6 @@
 using UnityEngine;
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace AUE
 {
@@ -20,23 +19,29 @@ namespace AUE
             }
         }
 
+        private string _assemblyShortName;
+        public string AssemblyShortName 
+        { 
+            get
+            {
+                CacheAssemblyIFN();
+                return _assemblyShortName;
+            }
+        }
+
+
         private Assembly _assembly;
         public Assembly Assembly
         { 
             get
             {
-                if (_isDirty)
-                {
-                    _assembly = FindAssemblyByName(_assemblyName);
-                    _isDirty = false;
-                }
+                CacheAssemblyIFN();
                 return _assembly;
             }
             set
             {
                 _assembly = value;
-                _assemblyName = GetAssemblyName(_assembly);
-                _isDirty = false;
+                CacheAssemblyIFN();
             }
         }
 
@@ -49,6 +54,16 @@ namespace AUE
         public static string GetAssemblyName(Type type) => GetAssemblyName(type.Assembly);
         public static string GetAssemblyName(Assembly assembly) => assembly.FullName;
 
+        private void CacheAssemblyIFN()
+        {
+
+            if (_isDirty)
+            {
+                _assembly = FindAssemblyByName(_assemblyName);
+                _assemblyShortName = _assembly?.GetName().Name ?? string.Empty;
+                _isDirty = false;
+            }
+        }
         public static Assembly FindAssemblyByName(string assemblyName)
         {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
