@@ -9,6 +9,7 @@ using UnityEngine.Events;
 
 namespace AUE
 {
+    [System.Diagnostics.DebuggerDisplay("{PrettyName} [{_callState}]")]
     [Serializable]
     public class AUEMethod : AUESimpleMethod, IAUEMethod
     {
@@ -53,7 +54,7 @@ namespace AUE
             ParameterInfo[] parameters = methodInfo.GetParameters();
 
             Assert.AreEqual(parameters.Length, desc.Parameters.Length,
-                $"It should be as much parameter infos descriptions as parameters of methods ({desc.Parameters.Length} / {parameters.Length})");
+                $"It should be as much parameter infos descriptions as parameters of methods ({desc.Parameters.Length.ToString()} / {parameters.Length.ToString()})");
 
             _parameterInfos = new AUEMethodParameterInfo[parameters.Length];
             for (int i = 0; i < parameters.Length; ++i)

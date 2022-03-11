@@ -6,7 +6,7 @@ using UnityEngine;
 namespace AUE
 {
     [Serializable]
-    [DebuggerDisplay("{_parameterType} ({_mode})")]
+    [DebuggerDisplay("{ParameterType} ({_mode})")]
     public class AUEMethodParameterInfo
     {
         public enum EMode

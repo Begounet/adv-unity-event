@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace AUE
 {
+    [System.Diagnostics.DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUESimpleMethod : ISerializationCallbackReceiver
     {
@@ -67,6 +70,9 @@ namespace AUE
         internal AUEMethodParameterInfo[] ParameterInfos => _parameterInfos;
 
         public bool IsStatic => (_staticType?.IsValidType ?? false);
+
+        [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+        public string PrettyName => GeneratePrettyName();        
 
         IMethodExecutionCache _cache;
 
@@ -221,5 +227,53 @@ namespace AUE
             }
         }
 #endif
+
+        private string GeneratePrettyName()
+        {
+            var sb = UnsafeGenericPool<StringBuilder>.Get();
+            {
+                sb.Clear();
+                sb.Append(_returnType != null && _returnType.IsValidType ? _returnType.Type.Name : "*");
+                sb.Append(' ');
+                sb.Append('(');
+                if (UnityThread.allowsAPI)
+                {
+                    if (_target != null)
+                    {
+                        sb.Append(_target.name);
+                    }
+                    else
+                    {
+                        sb.Append("<none>");
+                    }
+                }
+                else
+                {
+                    sb.Append("<not main thread>");
+                }
+                sb.Append(").");
+                sb.Append(!string.IsNullOrWhiteSpace(_methodName) ? _methodName : "<undefined>");
+                sb.Append('(');
+                if (_parameterInfos != null)
+                {
+                    for (int i = 0; i < _parameterInfos.Length; ++i)
+                    {
+                        var pi = _parameterInfos[i];
+                        sb.Append(pi.ParameterType.Name);
+                        sb.Append(" (");
+                        sb.Append(pi.Mode);
+                        sb.Append(')');
+                        if (i + 1 < _parameterInfos.Length)
+                        {
+                            sb.Append(", ");
+                        }
+                    }
+                }
+                sb.Append(')');
+            }
+            string result = sb.ToString();
+            UnsafeGenericPool<StringBuilder>.Release(sb);
+            return result;
+        }
     }
 }
