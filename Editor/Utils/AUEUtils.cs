@@ -86,17 +86,6 @@ namespace AUE
             var target = targetSP.objectReferenceValue;
             var targetType = GetTargetType(target);
 
-            var bindingFlags = (BindingFlags)aueMethodSP.FindPropertyRelative(BindingFlagsSPName).intValue;
-            bindingFlags = AdaptBindingFlags(target, bindingFlags);
-
-            Type returnType = SerializableTypeHelper.LoadType(aueMethodSP.FindPropertyRelative(ReturnTypeSPName));
-            MethodFilter methodFilter = new MethodFilter()
-            {
-                TargetType = targetType,
-                ReturnType = returnType,
-                BindingFlags = bindingFlags
-            };
-
             var parameterInfosSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             Type[] parameterTypes = new Type[parameterInfosSP.arraySize];
             for (int i = 0; i < parameterTypes.Length; ++i)
@@ -214,12 +203,13 @@ namespace AUE
         public static MethodMetaData LoadMethodMetaDataFromAUEMethod(SerializedProperty aueMethodSP)
         {
             var targetSP = aueMethodSP.FindPropertyRelative(TargetSPName);
+            var methodSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
             var returnTypeSP = aueMethodSP.FindPropertyRelative(ReturnTypeSPName);
             var parametersTypeSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             var bindingFlagsSP = aueMethodSP.FindPropertyRelative(BindingFlagsSPName);
 
             var target = targetSP.objectReferenceValue;
-            if (target == null)
+            if (target == null || string.IsNullOrEmpty(methodSP.stringValue))
             {
                 return null;
             }
@@ -229,7 +219,7 @@ namespace AUE
             bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
             var methodFilter = new MethodFilter() { TargetType = GetTargetType(target), ReturnType = returnType, BindingFlags = bindingFlags };
-            return MethodTypeCache.GetMethod(methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
+            return MethodTypeCache.GetMethod(methodSP.stringValue, methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
         }
 
         public static Type[] LoadTypesFromParameterInfos(SerializedProperty aueParameterInfos)
