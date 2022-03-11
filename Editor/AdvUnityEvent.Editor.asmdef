@@ -3,7 +3,9 @@
     "rootNamespace": "AUE",
     "references": [
         "GUID:98443e9e1b5c13e438be4f8b5742d20b",
-        "GUID:478a2357cc57436488a56e564b08d223"
+        "GUID:478a2357cc57436488a56e564b08d223",
+        "GUID:74d187d385d3b62449dbf8dca5aa8f6f",
+        "GUID:1282bd4e91c288843b5b072bc854f6d8"
     ],
     "includePlatforms": [
         "Editor"
@@ -19,6 +21,11 @@
             "name": "com.unity.editorcoroutines",
             "expression": "",
             "define": ""
+        },
+        {
+            "name": "com.apperture.interface-property-drawer",
+            "expression": "",
+            "define": "USE_INTERFACE_PROPERTY_DRAWER"
         }
     ],
     "noEngineReferences": false

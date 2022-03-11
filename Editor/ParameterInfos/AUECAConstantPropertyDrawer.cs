@@ -1,4 +1,5 @@
 using System;
+using TypeCodebase;
 using UnityEditor;
 using UnityEngine;
 
@@ -43,16 +44,18 @@ namespace AUE
             EnsureConstantTypeMatching();
             EnsureConstantValueValidity(property);
 
-            if (!CanBeDrawn())
+            float height = 0.0f;
+
+            if (!CanArgumentTypeBeingInstantiated(_argumentType))
             {
-                return 0.0f;
+                height += TypeSelectorGUI.GetHeight() + EditorGUIUtility.standardVerticalSpacing;
             }
 
-            if (!string.IsNullOrEmpty(_constantValueSP.managedReferenceFullTypename))
+            if (CanBeDrawn() && !string.IsNullOrEmpty(_constantValueSP.managedReferenceFullTypename))
             {
-                return EditorGUI.GetPropertyHeight(_internValueSP, _internValueSP.isExpanded) + EditorGUIUtility.standardVerticalSpacing;
+                height += EditorGUI.GetPropertyHeight(_internValueSP, _internValueSP.isExpanded) + EditorGUIUtility.standardVerticalSpacing;
             }
-            return 0.0f;
+            return height;
         }
 
         private bool CanBeDrawn() => (_argumentType != null && _internValueSP != null);
@@ -63,13 +66,20 @@ namespace AUE
             CacheDataThisFrame(property);
             EnsureConstantTypeMatching();
             EnsureConstantValueValidity(property);
+            
+            position.height = EditorGUIUtility.singleLineHeight;
+
+#if USE_INTERFACE_PROPERTY_DRAWER
+            if (!CanArgumentTypeBeingInstantiated(_argumentType))
+            {
+                position = DrawTypeInstantiation(position);
+            }
+#endif
 
             if (!CanBeDrawn())
             {
                 return;
             }
-
-            position.height = EditorGUIUtility.singleLineHeight;
 
             // Special case for UnityEngine.Object. They are saved as UnityEngine.Object but
             // we want to constrain this object field to the expected parameter type.
@@ -88,6 +98,34 @@ namespace AUE
                 EditorGUI.PropertyField(position, _internValueSP, _internalLabelValue, _internValueSP.isExpanded);
             }
         }
+
+#if USE_INTERFACE_PROPERTY_DRAWER
+        private Rect DrawTypeInstantiation(Rect position)
+        {
+            var options = new TypeSelectorAdvancedDropdown.Settings()
+            {
+                ConstraintType = GetTypeOrArrayElementType(_argumentType),
+                UsageFlags = TypeCodebase.ETypeUsageFlag.Class | TypeCodebase.ETypeUsageFlag.ForbidUnityObject
+            };
+
+            var constantValue = _constantValueSP.managedReferenceValue as IConstantValue;
+            Type constantValueType = (constantValue.Value != null ? constantValue.Value.GetType() : null);
+            position = TypeSelectorGUI.Draw(position, constantValueType, options.ConstraintType, options, out bool hasSelectedType, out Type selectedType);
+            if (hasSelectedType)
+            {
+                if (selectedType == null)
+                {
+                    constantValue.Value = null;
+                }
+                else
+                {
+                    constantValue.Value = Activator.CreateInstance(selectedType);
+                }
+            }
+
+            return position;
+        }
+#endif
 
         private void Initialize()
         {
@@ -156,7 +194,7 @@ namespace AUE
             {
                 bool isArray = argumentType.IsArray;
                 Type elementType = (isArray ? argumentType.GetElementType() : argumentType);
-
+                
                 foreach (var constantValueType in StandardConstantValues.ConstantMapping)
                 {
                     if (constantValueType.Key.IsAssignableFrom(elementType))
@@ -166,7 +204,7 @@ namespace AUE
                 }
 
                 IConstantValue gObj = new StandardConstantValues.GenericObject();
-                gObj.Value = CreateInstanceOrEmptyArray(elementType, isArray);
+                gObj.Value = (CanArgumentTypeBeingInstantiated(elementType) ? CreateInstanceOrEmptyArray(elementType, isArray) : null);
                 return gObj;
             }
             catch (Exception ex)
@@ -187,5 +225,13 @@ namespace AUE
                 return Activator.CreateInstance(type);
             }
         }
+
+        private static Type GetTypeOrArrayElementType(Type type)
+            => (type.IsArray ? type.GetElementType() : type);
+
+        private static bool CanArgumentTypeBeingInstantiated(Type type)
+            => CanTypeBeInstantiated(GetTypeOrArrayElementType(type));
+
+        private static bool CanTypeBeInstantiated(Type type) => !type.IsAbstract && !type.IsInterface;
     }
 }
