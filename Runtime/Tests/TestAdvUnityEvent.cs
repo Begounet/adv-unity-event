@@ -79,12 +79,6 @@ namespace AUE
             Debug.Log(_intGetter.Invoke(42));
         }
 
-        [Button]
-        public void TriggerFloatEvent(float value)
-        {
-            _floatEvent.Invoke(value);
-        }
-
         public void LogStuff()
         {
             Debug.Log("log stuff");
