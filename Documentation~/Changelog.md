@@ -1,5 +1,19 @@
 # Changelogs
 
+## 1.3.0
+
+- Supports Property path as custom argument.
+- Supports some casts when using dynamic arguments (integers can be used as floats for example).
+- Enums as custom arguments are now correctly managed.
+- Remove dependency to Odin
+- Depends on "type-codebase" and "interface-property-drawer" (optional) packages.
+- Improve overall stability
+- Improve display of `AUEEvents` while debugging.
+- Assert an error if there is an error in AOT generation pipeline
+- Add tool `Tools/AdvUnityEvent/Check Validity` to ensure all AUE methods validity in the whole project.
+- Add supports of arrays for constant custom arguments.
+- Fix UI issues (foldout, method preview names etc.)
+
 ## 1.2.0
 
 - UI improvements:
