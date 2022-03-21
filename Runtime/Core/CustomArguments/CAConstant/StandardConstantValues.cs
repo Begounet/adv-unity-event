@@ -9,6 +9,7 @@ namespace AUE
         internal static readonly Dictionary<Type, Type> ConstantMapping = new Dictionary<Type, Type>()
         {
             { typeof(UnityEngine.Object), typeof(UnityEngineObjectValue) },
+            { typeof(Enum), typeof(EnumValue) },
             { typeof(int), typeof(IntValue) },
             { typeof(float), typeof(FloatValue) },
             { typeof(bool), typeof(BoolValue) },
@@ -19,7 +20,9 @@ namespace AUE
             { typeof(Vector3Int), typeof(Vector3IntValue) },
         };
 
-        [Serializable]
+        internal class DrawValueOnlyAttribute : System.Attribute { }
+
+        [Serializable, DrawValueOnly]
         internal class IntValue : IConstantValue 
         {
             [SerializeField]
@@ -27,7 +30,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (int)value; }
         }
 
-        [Serializable]
+        [Serializable, DrawValueOnly]
         internal class FloatValue : IConstantValue
         {
             [SerializeField]
@@ -35,7 +38,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (float)value; }
         }
 
-        [Serializable] 
+        [Serializable, DrawValueOnly] 
         internal class BoolValue : IConstantValue 
         {
             [SerializeField]
@@ -43,7 +46,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (bool)value; }
         }
 
-        [Serializable]
+        [Serializable, DrawValueOnly]
         internal class StringValue : IConstantValue 
         {
             [SerializeField]
@@ -51,7 +54,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (string)value; }
         }
 
-        [Serializable] 
+        [Serializable, DrawValueOnly] 
         internal class Vector2Value : IConstantValue 
         {
             [SerializeField]
@@ -59,7 +62,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (Vector2)value; }
         }
 
-        [Serializable]
+        [Serializable, DrawValueOnly]
         internal class Vector2IntValue : IConstantValue 
         {
             [SerializeField]
@@ -67,7 +70,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (Vector2Int)value; }
         }
         
-        [Serializable] 
+        [Serializable, DrawValueOnly] 
         internal class Vector3Value : IConstantValue 
         {
             [SerializeField]
@@ -75,7 +78,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (Vector3)value; }
         }
 
-        [Serializable] 
+        [Serializable, DrawValueOnly] 
         internal class Vector3IntValue : IConstantValue 
         {
             [SerializeField]
@@ -83,7 +86,7 @@ namespace AUE
             object IConstantValue.Value { get => _value; set => _value = (Vector3Int)value; }
         }
         
-        [Serializable] 
+        [Serializable, DrawValueOnly] 
         internal class UnityEngineObjectValue : IConstantValue 
         {
             [SerializeField]
@@ -92,6 +95,14 @@ namespace AUE
         }
 
         [Serializable]
+        internal class EnumValue : IConstantValue
+        {
+            [SerializeField]
+            private int _value;
+            object IConstantValue.Value { get => _value; set => _value = (int)value; }
+        }
+
+        [Serializable, DrawValueOnly]
         internal class GenericObject : IConstantValue 
         { 
             [SerializeReference]
@@ -111,6 +122,9 @@ namespace AUE
             }
             return typeof(GenericObject);
         }
+
+        public static bool ShouldDrawValueOnly(Type t)
+            => (GetConstantContainerType(t).GetCustomAttributes(typeof(DrawValueOnlyAttribute), inherit: true).Length > 0);
     }
 
 }

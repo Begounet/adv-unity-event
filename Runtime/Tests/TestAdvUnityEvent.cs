@@ -1,6 +1,3 @@
-using Sirenix.OdinInspector;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,8 +8,7 @@ namespace AUE
         [System.Serializable]
         public class Test
         {
-            [ReadOnly]
-            public float lol;
+            public float lol { get; set; } = 18;
         }
 
 
@@ -69,6 +65,8 @@ namespace AUE
 
         public string HelloWorld => "Hello World";
 
+        private Test TestObj = new Test();
+
         public PathTest Path = new PathTest();
 
 
@@ -81,19 +79,14 @@ namespace AUE
             Debug.Log(_intGetter.Invoke(42));
         }
 
-        [Button]
-        public void TriggerFloatEvent(float value)
-        {
-            _floatEvent.Invoke(value);
-        }
-
         public void LogStuff()
         {
             Debug.Log("log stuff");
         }
         
-        public void LogStuff(Test t)
+        public void Log(object obj)
         {
+            Debug.Log(obj);
         }
 
         public void DoWithObject(int intValue, float floatValue, string strValue, bool boolValue, Vector2 vector2Value, Vector3 vector3Value, Transform transValue, UnityEngine.Object objValue, MonoBehaviour mb)

@@ -86,17 +86,6 @@ namespace AUE
             var target = targetSP.objectReferenceValue;
             var targetType = GetTargetType(target);
 
-            var bindingFlags = (BindingFlags)aueMethodSP.FindPropertyRelative(BindingFlagsSPName).intValue;
-            bindingFlags = AdaptBindingFlags(target, bindingFlags);
-
-            Type returnType = SerializableTypeHelper.LoadType(aueMethodSP.FindPropertyRelative(ReturnTypeSPName));
-            MethodFilter methodFilter = new MethodFilter()
-            {
-                TargetType = targetType,
-                ReturnType = returnType,
-                BindingFlags = bindingFlags
-            };
-
             var parameterInfosSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             Type[] parameterTypes = new Type[parameterInfosSP.arraySize];
             for (int i = 0; i < parameterTypes.Length; ++i)
@@ -214,12 +203,13 @@ namespace AUE
         public static MethodMetaData LoadMethodMetaDataFromAUEMethod(SerializedProperty aueMethodSP)
         {
             var targetSP = aueMethodSP.FindPropertyRelative(TargetSPName);
+            var methodSP = aueMethodSP.FindPropertyRelative(MethodNameSPName);
             var returnTypeSP = aueMethodSP.FindPropertyRelative(ReturnTypeSPName);
             var parametersTypeSP = aueMethodSP.FindPropertyRelative(ParameterInfosSPName);
             var bindingFlagsSP = aueMethodSP.FindPropertyRelative(BindingFlagsSPName);
 
             var target = targetSP.objectReferenceValue;
-            if (target == null)
+            if (target == null || string.IsNullOrEmpty(methodSP.stringValue))
             {
                 return null;
             }
@@ -229,7 +219,7 @@ namespace AUE
             bindingFlags = AdaptBindingFlags(target, bindingFlags);
 
             var methodFilter = new MethodFilter() { TargetType = GetTargetType(target), ReturnType = returnType, BindingFlags = bindingFlags };
-            return MethodTypeCache.GetMethod(methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
+            return MethodTypeCache.GetMethod(methodSP.stringValue, methodFilter, LoadTypesFromParameterInfos(parametersTypeSP));
         }
 
         public static Type[] LoadTypesFromParameterInfos(SerializedProperty aueParameterInfos)
@@ -298,6 +288,30 @@ namespace AUE
             return null;
         }
 
+        public static SerializedProperty FindRootAUEMethod(SerializedProperty property)
+        {
+            SerializedProperty parent = property;
+            while (parent != null)
+            {
+                if (IsProbablyAUEMethod(parent))
+                {
+                    return parent;
+                }
+                parent = parent.GetParent();
+                
+            }
+            return null;
+        }
+
+        public static bool IsProbablyAUEMethod(SerializedProperty property)
+        {
+            // If there is theses properties, it is probably an AUE method
+            return property.FindPropertyRelative(MethodNameSPName) != null &&
+                property.FindPropertyRelative(TargetSPName) != null &&
+                property.FindPropertyRelative(ReturnTypeSPName) != null &&
+                property.FindPropertyRelative(ParameterInfosSPName) != null;
+        }
+
         public static string MakeHumanDisplayType(Type t)
         {
             if (t == null)
@@ -332,6 +346,31 @@ namespace AUE
                 bindingFlags |= BindingFlags.Static;
             }
             return bindingFlags;
+        }
+
+        /// <summary>
+        /// Load parameters from the AUE root
+        /// </summary>
+        public static Type[] LoadMethodDynamicParameterTypes(SerializedProperty property)
+        {
+            var aueRootSP = FindAUERootInParent(property);
+            var argumentTypesSP = aueRootSP.FindPropertyRelative(ArgumentTypesSPName);
+            Type[] types = new Type[argumentTypesSP.arraySize];
+            for (int i = 0; i < argumentTypesSP.arraySize; ++i)
+            {
+                var argumentTypeSP = argumentTypesSP.GetArrayElementAtIndex(i);
+                types[i] = SerializableTypeHelper.LoadType(argumentTypeSP);
+            }
+            return types;
+        }
+
+        public static void SetAUEMethodDirty(SerializedProperty aueMethodSP)
+        {
+            var method = aueMethodSP.GetTarget<AUESimpleMethod>();
+            if (method != null)
+            {
+                method.SetDirty();
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace AUE
             InitializeTypeSearchDropdownIFN(property);
             Rect valueRect = EditorGUI.PrefixLabel(position, label);
             Type currentType = SerializableTypeHelper.LoadType(property);
-            if (GUI.Button(valueRect, currentType.FullName))
+            if (GUI.Button(valueRect, currentType?.FullName ?? "<undefined>"))
             {
                 _typeSearchDropdown.Show(valueRect);
             }
@@ -52,9 +52,31 @@ namespace AUE
         {
             if (_typeSearchDropdown == null)
             {
-                _typeSearchDropdown = new TypeSearchDropdown(_typeSearchDropdownState);
+                SerializableTypeConstraintAttribute attr = GetConstraintType();
+                TypeSearchDropdown.Settings settings = null;
+                if (attr != null)
+                {
+                    settings = new TypeSearchDropdown.Settings()
+                    {
+                        ConstraintType = attr.ConstraintType,
+                        UsageFlags = attr.FilterFlags
+                    };
+                }
+
+                _typeSearchDropdown = new TypeSearchDropdown(_typeSearchDropdownState, settings);
                 _typeSearchDropdown.OnTypeSelected += OnTypeSelected;
             }
+        }
+
+        private SerializableTypeConstraintAttribute GetConstraintType()
+        {
+            object[] constraints = fieldInfo.GetCustomAttributes(typeof(SerializableTypeConstraintAttribute), inherit: true);
+            if (constraints.Length == 0)
+            {
+                return null;
+            }
+
+            return (constraints[0] as SerializableTypeConstraintAttribute);
         }
 
         private void OnTypeSelected(Type newType)

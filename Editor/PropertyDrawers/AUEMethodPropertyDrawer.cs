@@ -15,6 +15,7 @@ namespace AUE
 
         private const int CallStateModeWidth = 150;
         private const int TargetCallStateSpace = 10;
+        private const int MethodSelectionButtonHeight = 20;
 
         private const string MethodNameSPName = "_methodName";
         private const string TargetSPName = "_target";
@@ -43,21 +44,16 @@ namespace AUE
             var targetSP = property.FindPropertyRelative(TargetSPName);
             if (targetSP.objectReferenceValue != null)
             {
-                height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                height += MethodSelectionButtonHeight + EditorGUIUtility.standardVerticalSpacing;
 
                 var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
-                if (parameterInfosSP.arraySize > 0)
+                if (parameterInfosSP.arraySize > 0 && parameterInfosSP.isExpanded)
                 {
-                    // Foldout label
-                    height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                    if (parameterInfosSP.isExpanded)
+                    // Parameter infos heights
+                    for (int i = 0; i < parameterInfosSP.arraySize; ++i)
                     {
-                        // Parameter infos heights
-                        for (int i = 0; i < parameterInfosSP.arraySize; ++i)
-                        {
-                            height += EditorGUI.GetPropertyHeight(parameterInfosSP.GetArrayElementAtIndex(i));
-                            height += EditorGUIUtility.standardVerticalSpacing;
-                        }
+                        height += EditorGUI.GetPropertyHeight(parameterInfosSP.GetArrayElementAtIndex(i));
+                        height += EditorGUIUtility.standardVerticalSpacing;
                     }
                 }
             }
@@ -96,19 +92,15 @@ namespace AUE
                 UpdateMethodName(property, null);
                 UpdateParameterInfos(property, null);
                 AUEMethodDatabaseUtils.UpdateMethodDatabase(AUEUtils.FindAUERootInParent(property));
-                SetMethodDirty(property);
+                AUEUtils.SetAUEMethodDirty(property);
             }
 
             if (targetSP.objectReferenceValue != null)
             {
                 DrawMethodSelection(ref lineRect, targetSP.objectReferenceValue, property);
 
-                ++EditorGUI.indentLevel;
-                {
-                    var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
-                    DrawParameterInfos(ref lineRect, property, parameterInfosSP);
-                }
-                --EditorGUI.indentLevel;
+                var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
+                DrawParameterInfos(ref lineRect, property, parameterInfosSP);
             }
         }
 
@@ -122,6 +114,7 @@ namespace AUE
                     "<None>";
 
                 Rect indentedPosition = EditorGUI.IndentedRect(position);
+                indentedPosition.height = MethodSelectionButtonHeight;
                 if (GUI.Button(indentedPosition, new GUIContent(method), MethodButtonStyle))
                 {
                     var dropdown = new MethodSearchDropdown(property, invokeInfos,
@@ -157,13 +150,13 @@ namespace AUE
                             UpdateParameterInfos(property, null);
                         }
                         AUEMethodDatabaseUtils.UpdateMethodDatabase(AUEUtils.FindAUERootInParent(property));
-                        SetMethodDirty(property);
+                        AUEUtils.SetAUEMethodDirty(property);
 
                         GUI.changed = true;
                     }
                 }
 
-                position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                position.y += MethodSelectionButtonHeight + EditorGUIUtility.standardVerticalSpacing;
             }
         }
 
@@ -200,15 +193,13 @@ namespace AUE
                 return;
             }
 
-            parameterInfosSP.isExpanded = EditorGUI.Foldout(position, parameterInfosSP.isExpanded, parameterInfosSP.displayName);
-            position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+            DrawParameterInfosFoldout(position, parameterInfosSP);
 
             if (parameterInfosSP.isExpanded)
             {
                 ParameterInfo[] parameterInfos = AUEUtils.LoadParameterTypesFromAUEMethod(aueMethodSP);
                 if (parameterInfos != null)
                 {
-                    ++EditorGUI.indentLevel;
                     for (int i = 0; i < parameterInfosSP.arraySize; ++i)
                     {
                         var parameterInfoSP = parameterInfosSP.GetArrayElementAtIndex(i);
@@ -221,9 +212,16 @@ namespace AUE
 
                         position.y += height + EditorGUIUtility.standardVerticalSpacing;
                     }
-                    --EditorGUI.indentLevel;
                 }
             }
+        }
+
+        private static void DrawParameterInfosFoldout(Rect position, SerializedProperty parameterInfosSP)
+        {
+            Rect foldoutRect = position;
+            foldoutRect.x -= 3; // Give little more space between foldout and button
+            foldoutRect.y -= position.height + EditorGUIUtility.standardVerticalSpacing;
+            parameterInfosSP.isExpanded = EditorGUI.Foldout(foldoutRect, parameterInfosSP.isExpanded, GUIContent.none);
         }
 
         private void UpdateParameterInfos(SerializedProperty aueSP, MethodInfo methodInfo)
@@ -261,15 +259,6 @@ namespace AUE
             customArgumentSP.managedReferenceValue = null;
 
             AUEMethodParameterInfoPropertyDrawer.InitializeCustomArgument(parameterInfoSP);
-        }
-
-        private void SetMethodDirty(SerializedProperty property)
-        {
-            var method = property.GetTarget<AUESimpleMethod>();
-            if (method != null)
-            {
-                method.SetDirty();
-            }
         }
 
         private PropertyMetaData TryGetTempMetaData(SerializedProperty property)

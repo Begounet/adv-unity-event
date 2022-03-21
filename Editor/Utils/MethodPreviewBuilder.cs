@@ -11,6 +11,7 @@ namespace AUE
     public static class MethodPreviewBuilder
     {
         private const string Undefined = "<undefined>";
+        private const string Error = "<error>";
 
         public static string GenerateMethodDisplayName(MethodInfo methodInfo,
             bool displayReturnType = true,
@@ -97,6 +98,11 @@ namespace AUE
         private static string GenerateParameterPreview(SerializedProperty parameterInfoSP)
         {
             var customArgumentSP = parameterInfoSP.FindPropertyRelative(AUEUtils.CustomArgumentSPName);
+            if (string.IsNullOrEmpty(customArgumentSP.managedReferenceFullTypename))
+            {
+                return Error;
+            }
+
             var modeSP = parameterInfoSP.FindPropertyRelative(AUEUtils.ModeSPName);
             var mode = (AUEMethodParameterInfo.EMode)modeSP.intValue;
             switch (mode)
@@ -107,6 +113,8 @@ namespace AUE
                     return GenerateParameterConstantPreview(customArgumentSP);
                 case AUEMethodParameterInfo.EMode.Method:
                     return GenerateParameterMethodPreview(customArgumentSP);
+                case AUEMethodParameterInfo.EMode.Property:
+                    return GenerateParameterPropertyPreview(customArgumentSP);
                 default:
                     return Undefined;
             }
@@ -134,6 +142,13 @@ namespace AUE
                 {
                     return $"\"{str}\"";
                 }
+                // Specal case for enums
+                else if (constantValue is StandardConstantValues.EnumValue)
+                {
+                    var constantTypeSP = customArgumentSP.FindPropertyRelative(AUEUtils.CAConstantTypeSPName);
+                    Type constantType = SerializableTypeHelper.LoadType(constantTypeSP);
+                    return EnumDisplayNameHelper.GetName((Enum)Enum.ToObject(constantType, constantValue.Value), constantType);
+                }
                 return constantValue.Value.ToString();
             }
             return Undefined;
@@ -150,6 +165,36 @@ namespace AUE
                 return GenerateMethodPreview(methodSP, displayReturnType: false);
             }
             return Undefined;
+        }
+
+        private static string GenerateParameterPropertyPreview(SerializedProperty customArgumentSP)
+        {
+            var propertyPathSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.PropertyPathSPName);
+            if (propertyPathSP == null)
+            {
+                return Error;
+            }
+
+            var sourceModeSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.SourceModeSPName);
+            if (sourceModeSP == null)
+            {
+                return Error;
+            }
+
+            if ((AUECAProperty.ESourceMode) sourceModeSP.enumValueIndex == AUECAProperty.ESourceMode.Target)
+            {
+                var targetSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.TargetSPName);
+                if (targetSP.objectReferenceValue == null)
+                {
+                    return "<no target>";
+                }
+                return $"{targetSP.objectReferenceValue.name}.{propertyPathSP.stringValue}";
+            }
+            else
+            {
+                var argIdxSP = customArgumentSP.FindPropertyRelative(AUECAPropertyPropertyDrawer.ArgIndexSPName);
+                return $"{{arg{argIdxSP.intValue}}}.{propertyPathSP.stringValue}";
+            }
         }
     }
 }

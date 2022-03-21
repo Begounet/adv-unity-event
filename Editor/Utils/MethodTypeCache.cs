@@ -17,15 +17,18 @@ namespace AUE
             outMethodMetaData.AddRange(CreateOrGetMethodMetaData(methodFilter));
         }
 
-        public static AUEUtils.MethodMetaData GetMethod(MethodFilter methodFilter, Type[] parameterTypes)
+        public static AUEUtils.MethodMetaData GetMethod(string methodName, MethodFilter methodFilter, Type[] parameterTypes)
         {
             var methodMetaDataArray = CreateOrGetMethodMetaData(methodFilter);
             for (int i = 0; i < methodMetaDataArray.Length; ++i)
             {
-                ParameterInfo[] pis = methodMetaDataArray[i].MethodInfo.GetParameters();
-                if (AUEUtils.DoesParametersMatchExactly(pis, parameterTypes))
+                if (methodMetaDataArray[i].MethodInfo.Name == methodName)
                 {
-                    return methodMetaDataArray[i];
+                    ParameterInfo[] pis = methodMetaDataArray[i].MethodInfo.GetParameters();
+                    if (AUEUtils.DoesParametersMatchExactly(pis, parameterTypes))
+                    {
+                        return methodMetaDataArray[i];
+                    }
                 }
             }
             return null;

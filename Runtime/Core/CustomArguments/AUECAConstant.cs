@@ -1,4 +1,3 @@
-using AUE.Descriptors;
 using System;
 using UnityEngine;
 
@@ -23,7 +22,6 @@ namespace AUE
             _constantValue.Value = value;
         }
 
-        object IAUECustomArgument.GetArgumentValue(IMethodDatabaseOwner methodDbOwner, Type ParameterType, object[] args) => _constantValue.Value;
-        bool IAUECustomArgument.IsValid(IMethodDatabaseOwner methodDbOwner, Type ParameterType) => true;
+        object IAUECustomArgument.GetArgumentValue(IAUEMethod aueMethod, Type ParameterType, object[] args) => _constantValue.Value;
     }
 }

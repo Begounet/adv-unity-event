@@ -8,14 +8,15 @@ namespace AUE
     {
         private const string ProjectTitlePath = "Project/Adv Unity Event";
         private const string DefaultAssetPath = "Assets/AdvUnityEvent Settings.asset";
-
         private static readonly string[] Keywords =
         {
-        "advanced",
-        "event",
-        "adv",
-        "aue"
-    };
+            "advanced",
+            "event",
+            "adv",
+            "aue"
+        };
+
+        private const string TypesAssembliesGUIDSPName = "_typesAssembliesGUID";
 
         private static SerializedObject _settingsSO = null;
 

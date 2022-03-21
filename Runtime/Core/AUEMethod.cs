@@ -9,8 +9,9 @@ using UnityEngine.Events;
 
 namespace AUE
 {
+    [System.Diagnostics.DebuggerDisplay("{PrettyName} [{_callState}]")]
     [Serializable]
-    public class AUEMethod : AUESimpleMethod, IMethodDatabaseOwner
+    public class AUEMethod : AUESimpleMethod, IAUEMethod
     {
         [SerializeField]
         protected UnityEventCallState _callState = UnityEventCallState.RuntimeOnly;
@@ -26,7 +27,7 @@ namespace AUE
 
         [SerializeField]
         private AUESimpleMethod[] _methodDatabase;
-        IList<AUESimpleMethod> IMethodDatabaseOwner.MethodDatabase => _methodDatabase;
+        public IList<AUESimpleMethod> MethodDatabase => _methodDatabase;
 
         internal object Invoke(params object[] args)
         {
@@ -52,8 +53,8 @@ namespace AUE
             MethodInfo methodInfo = targetType.GetMethod(_methodName, paramTypes);
             ParameterInfo[] parameters = methodInfo.GetParameters();
 
-            Assert.AreEqual(parameters.Length, desc.Parameters.Length, 
-                $"It should be as much parameter infos descriptions as parameters of methods ({desc.Parameters.Length} / {parameters.Length})");
+            Assert.AreEqual(parameters.Length, desc.Parameters.Length,
+                $"It should be as much parameter infos descriptions as parameters of methods ({desc.Parameters.Length.ToString()} / {parameters.Length.ToString()})");
 
             _parameterInfos = new AUEMethodParameterInfo[parameters.Length];
             for (int i = 0; i < parameters.Length; ++i)
@@ -70,7 +71,7 @@ namespace AUE
             }
             else if (_callState == UnityEventCallState.RuntimeOnly)
             {
-                return UnityEngine.Application.isPlaying;
+                return Application.isPlaying;
             }
 
             return true;
@@ -85,5 +86,44 @@ namespace AUE
             }
             return paramTypes;
         }
+
+        public IEnumerable<Type> GetArgumentTypes()
+        {
+            for (int i = 0; i < _argumentTypes.Count; ++i)
+            {
+                yield return _argumentTypes[i].Type;
+            }
+        }
+
+#if UNITY_EDITOR
+        protected override void RegisterForAOT()
+        {
+            base.RegisterForAOT();
+            OnEachCustomArgument<AUECAProperty>((prop) => prop.RegisterForAOT(this, RegisteredMembers));
+        }
+
+        private void OnEachInternalMethod(Action<AUESimpleMethod> callback)
+        {
+            callback(this);
+            for (int i = 0; i < _methodDatabase.Length; ++i)
+            {
+                callback(_methodDatabase[i]);
+            }
+        }
+
+        private void OnEachCustomArgument<T>(Action<T> callback) where T : IAUECustomArgument
+        {
+            OnEachInternalMethod((method) =>
+                {
+                    for (int i = 0; i < ParameterInfos.Length; ++i)
+                    {
+                        if (ParameterInfos[i].CustomArgument is T typedCustomArgument)
+                        {
+                            callback(typedCustomArgument);
+                        }
+                    }
+                });
+        }
+#endif
     }
 }

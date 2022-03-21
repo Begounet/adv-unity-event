@@ -15,7 +15,12 @@ Lightweight but more powerful version of Unity Event.
 
 [Changelog](Documentation~/Changelog.md)
 
+## Dependencies
+
 *Minimum version Unity required: 2019.3*
+
+- [Type Codebase](https://gitea.apperture.fr:3062/Apperture/type-codebase)
+- [Interface Property Drawer](https://gitea.apperture.fr:3062/Apperture/interface-property-drawer) *(Optional)*
 
 ## Screenshots
 

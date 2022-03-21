@@ -35,7 +35,7 @@ namespace AUE
                 var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(instance);
                 EditorUtility.SetDirty(obj);
             }
-            EditorApplication.ExecuteMenuItem("File/Save");
+            EditorApplication.ExecuteMenuItem("File/Save Project");
         }
 
         public static void ToAUEEvent(UnityEngine.Object owner, UnityEventBase uEvent, BaseAUEEvent aueEvent)

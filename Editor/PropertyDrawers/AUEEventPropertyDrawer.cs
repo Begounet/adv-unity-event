@@ -102,17 +102,19 @@ namespace AUE
                 onAddCallback = (rol) =>
                 {
                     eventsSP.InsertArrayElementAtIndex(eventsSP.arraySize);
-                    var newItem = eventsSP.GetArrayElementAtIndex(eventsSP.arraySize - 1);
-                    newItem.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
-                    newItem.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
-                    newItem.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
-                    SyncArgumentTypes(property, newItem);
+                    var newEventSP = eventsSP.GetArrayElementAtIndex(eventsSP.arraySize - 1);
+                    InitializeNewAUEEvent(property, newEventSP);
                 },
                 drawHeaderCallback = (Rect headerRect) =>
                 {
-                    headerRect.xMin += 10;
-                    headerRect.height = 18f;
-                    property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
+                    int indentLevel = EditorGUI.indentLevel;
+                    EditorGUI.indentLevel = 0;
+                    {
+                        headerRect.xMin += 10;
+                        headerRect.height = 18f;
+                        property.isExpanded = EditorGUI.Foldout(headerRect, property.isExpanded, _label);
+                    }
+                    EditorGUI.indentLevel = indentLevel;
                 },
                 drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
                 {
@@ -126,6 +128,19 @@ namespace AUE
                     return EditorGUI.GetPropertyHeight(eventSP, eventsSP.isExpanded);
                 },
             };
+        }
+
+        private void InitializeNewAUEEvent(SerializedProperty property, SerializedProperty aueEventSP)
+        {
+            aueEventSP.FindPropertyRelative(AUEUtils.TargetSPName).objectReferenceValue = null;
+            aueEventSP.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
+            aueEventSP.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
+
+            aueEventSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)
+            (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetField
+            | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.SetField);
+
+            SyncArgumentTypes(property, aueEventSP);
         }
 
         private void SyncArgumentTypes(SerializedProperty aueSP, SerializedProperty aueMethodSP)

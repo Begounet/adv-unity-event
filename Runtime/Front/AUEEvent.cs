@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 
 namespace AUE
 {
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUEEvent : BaseAUEEvent
     {
@@ -10,6 +12,7 @@ namespace AUE
         protected override void OnDefineEventsSignature() => DefineParameterTypes();
     }
 
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUEEvent<T> : BaseAUEEvent
     {
@@ -18,6 +21,7 @@ namespace AUE
         protected override void OnDefineEventsSignature() => DefineParameterTypes(typeof(T));
     }
 
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUEEvent<T0, T1> : BaseAUEEvent
     {
@@ -26,6 +30,7 @@ namespace AUE
         protected override void OnDefineEventsSignature() => DefineParameterTypes(typeof(T0), typeof(T1));
     }
 
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUEEvent<T0, T1, T2> : BaseAUEEvent
     {
@@ -34,6 +39,7 @@ namespace AUE
         protected override void OnDefineEventsSignature() => DefineParameterTypes(typeof(T0), typeof(T1), typeof(T2));
     }
 
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUEEvent<T0, T1, T2, T3> : BaseAUEEvent
     {
@@ -46,6 +52,7 @@ namespace AUE
     /// Special event whose the type can be changed at runtime.
     /// Allow to pass any arguments. It should match the parameter type.
     /// </summary>
+    [DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class CustomizableAUEEvent : BaseAUEEvent
     {

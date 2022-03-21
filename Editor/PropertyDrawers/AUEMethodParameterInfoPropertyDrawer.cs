@@ -88,17 +88,10 @@ namespace AUE
         private static void InitializeCustomArgument(SerializedProperty customArgumentSP, EMode mode)
         {
             object refValue = null;
-            switch (mode)
+            Type customArgumentType = GetArgumentTypeFromMode(mode);
+            if (customArgumentType != null)
             {
-                case EMode.Dynamic:
-                    refValue = new AUECADynamic();
-                    break;
-                case EMode.Constant:
-                    refValue = new AUECAConstant();
-                    break;
-                case EMode.Method:
-                    refValue = new AUECAMethodReference();
-                    break;
+                refValue = Activator.CreateInstance(customArgumentType);
             }
             customArgumentSP.managedReferenceValue = refValue;
             switch (mode)
@@ -112,7 +105,26 @@ namespace AUE
                 case EMode.Method:
                     AUECAMethodReferencePropertyDrawer.Initialize(customArgumentSP);
                     break;
+                case EMode.Property:
+                    AUECAPropertyPropertyDrawer.Initialize(customArgumentSP);
+                    break;
             }
+        }
+
+        public static Type GetArgumentTypeFromMode(EMode mode)
+        {
+            switch (mode)
+            {
+                case EMode.Dynamic:
+                    return typeof(AUECADynamic);
+                case EMode.Constant:
+                    return typeof(AUECAConstant);
+                case EMode.Property:
+                    return typeof(AUECAProperty);
+                case EMode.Method:
+                    return typeof(AUECAMethodReference);
+            }
+            return null;
         }
 
         private static bool TryDeleteMethodFromDatabase(SerializedProperty parameterInfoSP, SerializedProperty customArgumentSP)

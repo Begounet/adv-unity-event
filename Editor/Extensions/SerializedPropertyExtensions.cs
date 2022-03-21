@@ -27,6 +27,11 @@ namespace AUE
                     isNextPropertyArrayIndex = false;
                     int arrayIndex = ParseArrayIndex(propName);
                     var targetAsArray = (IList)target;
+                    if (arrayIndex < 0 || arrayIndex >= targetAsArray.Count)
+                    {
+                        return default(T);
+                    }
+
                     target = targetAsArray[arrayIndex];
                 }
                 else
@@ -162,5 +167,8 @@ namespace AUE
             path = path.Remove(path.LastIndexOf('.'));
             return property.serializedObject.FindProperty(path);
         }
+
+        public static bool HasProperty(this SerializedProperty property, string propertyName) 
+            => (property.FindPropertyRelative(propertyName) != null);
     }
 }

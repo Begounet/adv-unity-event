@@ -6,19 +6,21 @@ using UnityEngine;
 namespace AUE
 {
     [Serializable]
-    [DebuggerDisplay("{_parameterType} ({_mode})")]
+    [DebuggerDisplay("{ParameterType} ({_mode})")]
     public class AUEMethodParameterInfo
     {
         public enum EMode
         {
             Dynamic,
             Constant,
+            Property,
             Method
         }
 
 #pragma warning disable 0414
         [SerializeField]
         private EMode _mode = EMode.Constant;
+        public EMode Mode => _mode;
 #pragma warning restore
 
         [SerializeField]
@@ -27,10 +29,11 @@ namespace AUE
 
         [SerializeReference]
         private IAUECustomArgument _customArgument;
+        internal IAUECustomArgument CustomArgument => _customArgument;
 
-        internal object GetValue(IMethodDatabaseOwner methodDbOwner, object[] args)
+        internal object GetValue(IAUEMethod aueMethod, object[] args)
         {
-            return (_customArgument?.GetArgumentValue(methodDbOwner, ParameterType, args) ?? null);
+            return (_customArgument?.GetArgumentValue(aueMethod, ParameterType, args) ?? null);
         }
 
         public AUEMethodParameterInfo() { }

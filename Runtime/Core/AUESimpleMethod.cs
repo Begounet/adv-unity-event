@@ -3,26 +3,39 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace AUE
 {
+    [System.Diagnostics.DebuggerDisplay("{PrettyName}")]
     [Serializable]
     public class AUESimpleMethod : ISerializationCallbackReceiver
     {
 #if UNITY_EDITOR
         public static bool IsRegisteringMethods = false;
         public static HashSet<MethodInfo> RegisteredMethods = new HashSet<MethodInfo>();
+        public static HashSet<MemberInfo> RegisteredMembers = new HashSet<MemberInfo>();
 
         [SerializeField]
         private byte _id;
+#endif
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>
+        /// Useful to find a method from code breakpoint to Unity scene.
+        /// Use a string property finder to match the identifier.
+        /// </summary>
+        [SerializeField]
+        private string _identifier;
 #endif
 
         /// <summary>
         /// Contains the type when the method is static
         /// </summary>
         [SerializeField]
-        private SerializableType _staticType;
+        private SerializableType _staticType = new SerializableType();
 
         [SerializeField]
         protected UnityEngine.Object _target;
@@ -56,11 +69,14 @@ namespace AUE
         protected AUEMethodParameterInfo[] _parameterInfos;
         internal AUEMethodParameterInfo[] ParameterInfos => _parameterInfos;
 
-        public bool IsStatic => _staticType.IsValidType;
+        public bool IsStatic => (_staticType?.IsValidType ?? false);
+
+        [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
+        public string PrettyName => GeneratePrettyName();        
 
         IMethodExecutionCache _cache;
 
-        internal object Invoke(IMethodDatabaseOwner methodDbOwner, params object[] args)
+        internal object Invoke(IAUEMethod aueMethod, params object[] args)
         {
             if (!IsValid())
             {
@@ -77,7 +93,7 @@ namespace AUE
                 Cache();
             }
 
-            return _cache.Invoke(methodDbOwner, args);
+            return _cache.Invoke(aueMethod, args);
 
 #if AUE_SAFE
             }
@@ -92,7 +108,7 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
-            => (_target != null && !string.IsNullOrWhiteSpace(_methodName));
+            => ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
 
         internal void SetDirty()
         {
@@ -103,11 +119,15 @@ namespace AUE
 
         public void OnAfterDeserialize()
         {
-            Cache(safeAccess: true);
 #if UNITY_EDITOR
+            if (string.IsNullOrEmpty(_identifier))
+            {
+                _identifier = Guid.NewGuid().ToString();
+            }
+
             if (IsRegisteringMethods)
             {
-                RegisterMethodForAOT();
+                RegisterForAOT();
             }
 #endif
         }
@@ -129,14 +149,14 @@ namespace AUE
 
         internal MethodInfo GetFastMethod()
         {
-            Type targetType = GetTargeType();
+            Type targetType = GetTargetType();
             Type[] methodParameterTypes = GenerateMethodParameterTypes();
             return targetType.GetMethod(_methodName, methodParameterTypes);
         }
 
         internal MethodInfo GetSafeMethod()
         {
-            Type targetType = GetTargeType();
+            Type targetType = GetTargetType();
             if (targetType == null)
             {
                 return null;
@@ -146,25 +166,43 @@ namespace AUE
             return targetType.GetMethod(_methodName, parameterTypes);
         }
 
-        private Type GetTargeType()
+        private Type GetTargetType()
         {
-            return (IsStatic ? _staticType.Type : _target.GetType());
+#if AUE_SAFE
+            try
+            {
+                if (!IsValid())
+                {
+                    return null;
+                }
+#endif
+                return (IsStatic ? _staticType.Type : _target.GetType());
+#if AUE_SAFE
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                return null;
+            }
+#endif
         }
 
-#if UNITY_DEVELOPMENT_BUILD && AUE_SAFE
+#if DEVELOPMENT_BUILD && AUE_SAFE
         internal MethodInfo GetSafeVerboseMethod()
         {
             try
             {
-                Type targetType = GetTargeType();
+                Type targetType = GetTargetType();
                 if (targetType == null)
                 {
                     return null;
                 }
 
-                Type[] parameterTypes = _parameterInfos.Select((pi) => pi.Type).ToArray();
+                Type[] parameterTypes = _parameterInfos
+                    .Select((pi) => pi.ParameterType).ToArray();
+
                 MethodInfo mi = targetType.GetMethod(_methodName, parameterTypes);
-                if (_returnType.IsValidType && mi.ReturnType != _returnType.Type)
+                if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
                     throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
                 }
@@ -172,7 +210,7 @@ namespace AUE
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Could not get method {_methodName} from class {GetTargeType()?.FullName ?? "unknown"} from assembly {GetTargeType()?.Assembly.ToString() ?? "unknown"}");
+                Debug.LogError($"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}");
                 Debug.LogException(ex);
                 return null;                    
             }
@@ -180,7 +218,7 @@ namespace AUE
 #endif
 
 #if UNITY_EDITOR
-        private void RegisterMethodForAOT()
+        protected virtual void RegisterForAOT()
         {
             MethodInfo mi = GetSafeMethod();
             if (mi != null)
@@ -189,5 +227,53 @@ namespace AUE
             }
         }
 #endif
+
+        private string GeneratePrettyName()
+        {
+            var sb = UnsafeGenericPool<StringBuilder>.Get();
+            {
+                sb.Clear();
+                sb.Append(_returnType != null && _returnType.IsValidType ? _returnType.Type.Name : "*");
+                sb.Append(' ');
+                sb.Append('(');
+                if (UnityThread.allowsAPI)
+                {
+                    if (_target != null)
+                    {
+                        sb.Append(_target.name);
+                    }
+                    else
+                    {
+                        sb.Append("<none>");
+                    }
+                }
+                else
+                {
+                    sb.Append("<not main thread>");
+                }
+                sb.Append(").");
+                sb.Append(!string.IsNullOrWhiteSpace(_methodName) ? _methodName : "<undefined>");
+                sb.Append('(');
+                if (_parameterInfos != null)
+                {
+                    for (int i = 0; i < _parameterInfos.Length; ++i)
+                    {
+                        var pi = _parameterInfos[i];
+                        sb.Append(pi.ParameterType.Name);
+                        sb.Append(" (");
+                        sb.Append(pi.Mode);
+                        sb.Append(')');
+                        if (i + 1 < _parameterInfos.Length)
+                        {
+                            sb.Append(", ");
+                        }
+                    }
+                }
+                sb.Append(')');
+            }
+            string result = sb.ToString();
+            UnsafeGenericPool<StringBuilder>.Release(sb);
+            return result;
+        }
     }
 }
