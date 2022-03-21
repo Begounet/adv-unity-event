@@ -8,6 +8,8 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
+// TODO: Remove TypeSearchDropdown since it is now available from Type Codebase, with TypeSelectorGUI
+
 namespace AUE
 {
     public class TypeSearchDropdown : AdvancedDropdown
