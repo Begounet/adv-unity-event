@@ -99,7 +99,6 @@ namespace AUE
             }
         }
 
-#if USE_INTERFACE_PROPERTY_DRAWER
         private Rect DrawTypeInstantiation(Rect position)
         {
             var options = new TypeSelectorAdvancedDropdown.Settings()
@@ -125,7 +124,6 @@ namespace AUE
 
             return position;
         }
-#endif
 
         private void Initialize()
         {
