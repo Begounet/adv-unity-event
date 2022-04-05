@@ -38,10 +38,10 @@ namespace AUE
 
         public AUEMethodParameterInfo() { }
 
-        public AUEMethodParameterInfo(AUEParameterDescriptor desc, Type parameterType)
+        public AUEMethodParameterInfo(AUEParameterDescriptor desc)
         {
             _mode = desc.Mode;
-            _parameterType = new SerializableType(parameterType);
+            _parameterType = new SerializableType(desc.ParameterType);
             _customArgument = desc.CustomArgument;
         }
     }

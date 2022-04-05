@@ -59,7 +59,7 @@ namespace AUE
             _parameterInfos = new AUEMethodParameterInfo[parameters.Length];
             for (int i = 0; i < parameters.Length; ++i)
             {
-                _parameterInfos[i] = new AUEMethodParameterInfo(desc.Parameters[i], parameters[i].ParameterType);
+                _parameterInfos[i] = new AUEMethodParameterInfo(desc.Parameters[i]);
             }
         }
 
