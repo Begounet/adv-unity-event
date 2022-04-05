@@ -118,9 +118,16 @@ namespace AUE
                 },
                 drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
                 {
-                    var eventSP = eventsSP.GetArrayElementAtIndex(index);
-                    SyncArgumentTypes(property, eventSP);
-                    EditorGUI.PropertyField(rect, eventSP, eventsSP.isExpanded);
+                    try
+                    {
+                        var eventSP = eventsSP.GetArrayElementAtIndex(index);
+                        SyncArgumentTypes(property, eventSP);
+                        EditorGUI.PropertyField(rect, eventSP, eventsSP.isExpanded);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                    }
                 },
                 elementHeightCallback = (index) =>
                 {
