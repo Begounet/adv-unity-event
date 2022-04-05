@@ -154,6 +154,12 @@ namespace AUE
                 Component[] components = gameObject.GetComponents<Component>();
                 for (int i = 0; i < components.Length; ++i)
                 {
+                    // May be null if component is a missing script
+                    if (components[i] == null)
+                    {
+                        continue;
+                    }
+
                     invokeInfo = new TargetInvokeInfo() { Target = components[i] };
                     methodFilter = new MethodFilter()
                     {
