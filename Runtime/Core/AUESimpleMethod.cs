@@ -151,7 +151,7 @@ namespace AUE
         {
             Type targetType = GetTargetType();
             Type[] methodParameterTypes = GenerateMethodParameterTypes();
-            return targetType.GetMethod(_methodName, methodParameterTypes);
+            return targetType.GetMethod(_methodName, _bindingFlags, binder: null, methodParameterTypes, modifiers: null);
         }
 
         internal MethodInfo GetSafeMethod()
@@ -163,7 +163,7 @@ namespace AUE
             }
 
             Type[] parameterTypes = _parameterInfos.Where((pi) => pi.ParameterType != null).Select((pi) => pi.ParameterType).ToArray();
-            return targetType.GetMethod(_methodName, parameterTypes);
+            return targetType.GetMethod(_methodName, _bindingFlags, binder: null, parameterTypes, modifiers: null);
         }
 
         private Type GetTargetType()
@@ -201,7 +201,7 @@ namespace AUE
                 Type[] parameterTypes = _parameterInfos
                     .Select((pi) => pi.ParameterType).ToArray();
 
-                MethodInfo mi = targetType.GetMethod(_methodName, parameterTypes);
+                MethodInfo mi = targetType.GetMethod(_methodName, _bindingFlags, binder: null, parameterTypes, modifiers: null);
                 if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
                     throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
