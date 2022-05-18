@@ -187,7 +187,7 @@ namespace AUE
 #endif
         }
 
-#if DEVELOPMENT_BUILD && AUE_SAFE
+#if UNITY_EDITOR || (DEVELOPMENT_BUILD && AUE_SAFE)
         internal MethodInfo GetSafeVerboseMethod()
         {
             try
@@ -202,6 +202,10 @@ namespace AUE
                     .Select((pi) => pi.ParameterType).ToArray();
 
                 MethodInfo mi = targetType.GetMethod(_methodName, _bindingFlags, binder: null, parameterTypes, modifiers: null);
+                if (mi == null)
+                {
+                    throw new InvalidOperationException();
+                }
                 if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
                     throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
@@ -210,8 +214,12 @@ namespace AUE
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}");
                 Debug.LogException(ex);
+                string error = $"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}";
+#if UNITY_EDITOR
+                error = $"[{UnityEngine.SceneManagement.SceneManager.GetActiveScene().path}]" + error;
+#endif
+                Debug.LogError(error);
                 return null;                    
             }
         }
@@ -220,7 +228,7 @@ namespace AUE
 #if UNITY_EDITOR
         protected virtual void RegisterForAOT()
         {
-            MethodInfo mi = GetSafeMethod();
+            MethodInfo mi = GetSafeVerboseMethod();
             if (mi != null)
             {
                 RegisteredMethods.Add(mi);
