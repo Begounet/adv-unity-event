@@ -12,5 +12,8 @@
     "name": "Arnaud Begue",
     "url": "https://twitter.com/ABegounet"
   },
-  "type": "tool"
+  "type": "tool",
+  "dependencies": {
+    "com.apperture.type-codebase": ""
+  }
 }
