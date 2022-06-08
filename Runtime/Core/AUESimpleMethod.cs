@@ -58,6 +58,7 @@ namespace AUE
             BindingFlags.Public 
             | BindingFlags.NonPublic
             | BindingFlags.Instance
+            | BindingFlags.Static
             | BindingFlags.GetField
             | BindingFlags.GetProperty
             | BindingFlags.SetProperty
