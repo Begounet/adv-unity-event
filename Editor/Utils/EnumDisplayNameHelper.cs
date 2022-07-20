@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using UnityEngine;
 
 namespace AUE
 {
@@ -39,6 +40,32 @@ namespace AUE
                 }
             }
             return sb.ToString();
+        }
+
+        public static GUIContent[] BuildEnumOptions<T>()
+        {
+            Type type = typeof(T);
+            Array enumValues = type.GetEnumValues();
+            var options = new GUIContent[enumValues.Length];
+            for (int i = 0; i < enumValues.Length; ++i)
+            {
+                T enumValue = (T)enumValues.GetValue(i);
+
+                string enumName = enumValue.ToString();
+                var attrs = 
+                    type.GetField(enumName)
+                    .GetCustomAttributes(typeof(EnumDescriptionAttribute), inherit: true) 
+                    as EnumDescriptionAttribute[];
+
+                string tooltip = string.Empty;
+                if (attrs.Length > 0)
+                {
+                    tooltip = attrs[0].Description;
+                }
+                
+                options[i] = new GUIContent(enumName, tooltip);
+            }
+            return options;
         }
     }
 }

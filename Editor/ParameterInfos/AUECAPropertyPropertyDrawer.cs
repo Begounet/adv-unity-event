@@ -11,6 +11,7 @@ namespace AUE
     public class AUECAPropertyPropertyDrawer : PropertyDrawer
     {
         public const string SourceModeSPName = "_sourceMode";
+        public const string ExecutionSafeModeSPName = "_executionSafeMode";
         public const string TargetSPName = "_target";
         public const string ArgIndexSPName = "_argIndex";
         public const string PropertyPathSPName = "_propertyPath";
@@ -26,10 +27,12 @@ namespace AUE
         private const int TargetOptionIndex = 0;
 
         private SerializedProperty _sourceModeSP;
+        private SerializedProperty _executionSafeModeSP;
         private SerializedProperty _targetSP;
         private SerializedProperty _argIndexSP;
         private SerializedProperty _propertyPathSP;
         private string[] _sourceOptions;
+        private GUIContent[] _executionSafeModeOptions;
         private Type[] _argTypes;
 
         private GUIStyle _actionLabelStyle;
@@ -50,6 +53,7 @@ namespace AUE
             _targetProperty = property.GetTarget<AUECAProperty>();
 
             _sourceModeSP = property.FindPropertyRelative(SourceModeSPName);
+            _executionSafeModeSP = property.FindPropertyRelative(ExecutionSafeModeSPName);
             _targetSP = property.FindPropertyRelative(TargetSPName);
             _argIndexSP = property.FindPropertyRelative(ArgIndexSPName);
             _propertyPathSP = property.FindPropertyRelative(PropertyPathSPName);
@@ -74,6 +78,8 @@ namespace AUE
             {
                 _argTypes = null;
             }
+
+            _executionSafeModeOptions = EnumDisplayNameHelper.BuildEnumOptions<AUECAProperty.EExecutionSafeMode>();
 
             _actionLabelStyle = GUI.skin.button;
         }
@@ -115,11 +121,12 @@ namespace AUE
             {
                 position.height = EditorGUIUtility.singleLineHeight;
             }
-            {
-                DrawSourceOptions(ref position);
-                DrawTargetIFN(ref position);
-                DrawPropertyPath(ref position, property);
-            }
+
+            DrawExecutionSafeMode(ref position);
+            DrawSourceOptions(ref position);
+            DrawTargetIFN(ref position);
+            DrawPropertyPath(ref position, property);
+
             if (_requiresScrollView)
             {
                 GUI.EndScrollView();
@@ -130,13 +137,17 @@ namespace AUE
         {
             GUIContent content = new GUIContent();
 
-            int sourceOptionIndex = FindSourceOptionIndex();
-            content.text = _sourceOptions[sourceOptionIndex];
-
             float width = 0.0f;
 
-            // Source Mode width
+            // Execution safe mode width
+            int executionModeOptionIndex = _executionSafeModeSP.enumValueIndex;
+            content.text = _executionSafeModeOptions[executionModeOptionIndex].text;
             width = _actionLabelStyle.CalcSize(content).x + 30 + Space;
+
+            // Source Mode width
+            int sourceOptionIndex = FindSourceOptionIndex();
+            content.text = _sourceOptions[sourceOptionIndex];
+            width += _actionLabelStyle.CalcSize(content).x + 30 + Space;
 
             // Property path width
             if (_propertyPathItems != null)
@@ -157,6 +168,17 @@ namespace AUE
             }
 
             return width;
+        }
+
+        private Rect DrawExecutionSafeMode(ref Rect position)
+        {
+            position.width = _actionLabelStyle.CalcSize(_executionSafeModeOptions[_executionSafeModeSP.enumValueIndex]).x + 30;
+            
+            _executionSafeModeSP.enumValueIndex = 
+                EditorGUI.Popup(position, GUIContent.none, _executionSafeModeSP.enumValueIndex, _executionSafeModeOptions);
+
+            position.x += position.width - 15 + Space;
+            return position;
         }
 
         private Rect DrawSourceOptions(ref Rect position)
