@@ -24,6 +24,7 @@ namespace AUE
             BindingFlags.Public
             | BindingFlags.NonPublic
             | BindingFlags.Instance
+            | BindingFlags.Static
             | BindingFlags.SetProperty
             | BindingFlags.SetField;
         public BindingFlags BindingFlags

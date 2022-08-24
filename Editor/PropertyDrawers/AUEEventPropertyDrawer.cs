@@ -120,9 +120,12 @@ namespace AUE
                 {
                     try
                     {
-                        var eventSP = eventsSP.GetArrayElementAtIndex(index);
-                        SyncArgumentTypes(property, eventSP);
-                        EditorGUI.PropertyField(rect, eventSP, eventsSP.isExpanded);
+                        if (index >= 0 && index < eventsSP.arraySize)
+                        {
+                            var eventSP = eventsSP.GetArrayElementAtIndex(index);
+                            SyncArgumentTypes(property, eventSP);
+                            EditorGUI.PropertyField(rect, eventSP, eventsSP.isExpanded);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -131,8 +134,12 @@ namespace AUE
                 },
                 elementHeightCallback = (index) =>
                 {
-                    var eventSP = eventsSP.GetArrayElementAtIndex(index);
-                    return EditorGUI.GetPropertyHeight(eventSP, eventsSP.isExpanded);
+                    if (index >= 0 && index < eventsSP.arraySize)
+                    {
+                        var eventSP = eventsSP.GetArrayElementAtIndex(index);
+                        return EditorGUI.GetPropertyHeight(eventSP, eventsSP.isExpanded);
+                    }
+                    return 0.0f;
                 },
             };
         }
@@ -144,8 +151,14 @@ namespace AUE
             aueEventSP.FindPropertyRelative(AUEUtils.CallStateSPName).enumValueIndex = (int)UnityEventCallState.RuntimeOnly;
 
             aueEventSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)
-            (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetField
-            | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.SetField);
+                (BindingFlags.Public
+                | BindingFlags.NonPublic
+                | BindingFlags.Instance
+                | BindingFlags.Static
+                | BindingFlags.GetField
+                | BindingFlags.GetProperty
+                | BindingFlags.SetProperty
+                | BindingFlags.SetField);
 
             SyncArgumentTypes(property, aueEventSP);
         }
