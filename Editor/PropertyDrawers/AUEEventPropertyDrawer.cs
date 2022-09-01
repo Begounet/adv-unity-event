@@ -18,6 +18,7 @@ namespace AUE
         private ReorderableList _reorderableList = null;
         private GUIContent _label;
         private bool _isStateInitialized = false;
+        private Type[] _cachedArgumentTypes;
 
         private static readonly MethodInfo DoListHeaderMI = typeof(ReorderableList).GetMethod("DoListHeader", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -58,16 +59,18 @@ namespace AUE
 
         private void CacheLabel(SerializedProperty property, GUIContent baseLabel)
         {
-            if (_label != null)
+            if (_label != null && !HasArgumentsChanged(property))
             {
                 return;
             }
 
             var argumentTypesSP = property.FindPropertyRelative(AUEUtils.ArgumentTypesSPName);
             var argumentTypesSB = new StringBuilder();
+            _cachedArgumentTypes = new Type[argumentTypesSP.arraySize];
             for (int i = 0; i < argumentTypesSP.arraySize; ++i)
             {
                 Type argumentType = SerializableTypeHelper.LoadType(argumentTypesSP.GetArrayElementAtIndex(i));
+                _cachedArgumentTypes[i] = argumentType;
                 if (argumentType != null)
                 {
                     argumentTypesSB.Append(AUEUtils.MakeHumanDisplayType(argumentType));
@@ -82,6 +85,31 @@ namespace AUE
                 }
             }
             _label = new GUIContent($"{baseLabel.text}({argumentTypesSB.ToString()})", baseLabel.tooltip);
+        }
+
+        private bool HasArgumentsChanged(SerializedProperty property)
+        {
+            if (_cachedArgumentTypes == null)
+            {
+                return true;
+            }
+
+            var argumentTypesSP = property.FindPropertyRelative(AUEUtils.ArgumentTypesSPName);
+            if (_cachedArgumentTypes.Length != argumentTypesSP.arraySize)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < argumentTypesSP.arraySize; ++i)
+            {
+                Type argumentType = SerializableTypeHelper.LoadType(argumentTypesSP.GetArrayElementAtIndex(i));
+                if (_cachedArgumentTypes[i] != argumentType)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawOnlyHeader(Rect position)
