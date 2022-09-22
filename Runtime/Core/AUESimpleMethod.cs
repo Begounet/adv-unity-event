@@ -109,7 +109,20 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
-            => ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+        {
+#if UNITY_EDITOR
+            // May happen not being on main thread during AOT registering.
+            // In that special case, ignore target check because it will not work during serialization step.
+            if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
+            {
+                return (_staticType.IsValidType && !string.IsNullOrWhiteSpace(_methodName));
+            }
+            else
+#endif
+            {
+                return ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+            }
+        }
 
         internal void SetDirty()
         {
