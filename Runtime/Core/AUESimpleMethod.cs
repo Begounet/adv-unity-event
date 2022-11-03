@@ -54,15 +54,7 @@ namespace AUE
         }
 
         [SerializeField]
-        protected BindingFlags _bindingFlags = 
-            BindingFlags.Public 
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.Static
-            | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        protected BindingFlags _bindingFlags = DefaultBindingFlags.AUESimpleMethod;
         public BindingFlags BindingFlags { get => _bindingFlags; set => _bindingFlags = value; }
 
         // Set by the property drawer when method is selected
