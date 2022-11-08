@@ -12,14 +12,7 @@ namespace AUE.Descriptors
         public Type[] ArgumentTypes { get; set; }
         public AUEParameterDescriptor[] Parameters { get; set; }
 
-        public BindingFlags BindingFlags { get; set; } =
-            BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        public BindingFlags BindingFlags { get; set; } = DefaultBindingFlags.AUESimpleMethod;
 
         public UnityEventCallState CallState { get; set; } = UnityEventCallState.RuntimeOnly;
 

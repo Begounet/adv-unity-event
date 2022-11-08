@@ -55,15 +55,7 @@ namespace AUE
         }
 
         [SerializeField]
-        protected BindingFlags _bindingFlags = 
-            BindingFlags.Public 
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.Static
-            | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        protected BindingFlags _bindingFlags = DefaultBindingFlags.AUESimpleMethod;
         public BindingFlags BindingFlags { get => _bindingFlags; set => _bindingFlags = value; }
 
         // Set by the property drawer when method is selected
@@ -110,7 +102,20 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
-            => ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+        {
+#if UNITY_EDITOR
+            // May happen not being on main thread during AOT registering.
+            // In that special case, ignore target check because it will not work during serialization step.
+            if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
+            {
+                return (_staticType.IsValidType && !string.IsNullOrWhiteSpace(_methodName));
+            }
+            else
+#endif
+            {
+                return ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+            }
+        }
 
         internal void SetDirty()
         {

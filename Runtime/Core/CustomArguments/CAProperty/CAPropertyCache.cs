@@ -72,7 +72,7 @@ namespace AUE
 
         private bool BuildCacheRecursive(Type targetType, string[] propertyPath, int startIndex)
         {
-            BindingFlags bf = BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            BindingFlags bf = DefaultBindingFlags.GetProperty;
 
             string propertyName = propertyPath[startIndex];
             Type propertyType = null;
