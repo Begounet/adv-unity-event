@@ -199,6 +199,12 @@ namespace AUE
 
         public void OnPreprocessBuild(BuildReport report)
         {
+            var aueSettings = AUESettingsProvider.GetSettings<AUESettings>();
+            if (aueSettings != null)
+            {
+                AUESimpleMethod.NullTargetBehavior = aueSettings.NullTargetBehavior;
+            }
+
             AUESimpleMethod.RegisteredMethods.Clear();
             AUESimpleMethod.RegisteredMembers.Clear();
             AUESimpleMethod.IsRegisteringMethods = true;

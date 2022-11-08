@@ -4,6 +4,12 @@ namespace AUE
 {
     public class AUESettings : ScriptableObject
     {
+        public enum ENullTargetBehavior
+        {
+            Exception,
+            Ignore,
+        }
+
         [Header("Editor")]
 
         [SerializeField]
@@ -15,6 +21,9 @@ namespace AUE
         };
         public AssemblyReference[] TypesAssemblies => _typesAssemblies;
 
+        [SerializeField, Tooltip("Determines the behavior when a null target is found in an AUE Method")]
+        private ENullTargetBehavior _nullTargetBehavior;
+        public ENullTargetBehavior NullTargetBehavior => _nullTargetBehavior;
 
         [Header("Upgrader")]
 

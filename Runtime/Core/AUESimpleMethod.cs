@@ -17,6 +17,7 @@ namespace AUE
         public static bool IsRegisteringMethods = false;
         public static HashSet<MethodInfo> RegisteredMethods = new HashSet<MethodInfo>();
         public static HashSet<MemberInfo> RegisteredMembers = new HashSet<MemberInfo>();
+        public static AUESettings.ENullTargetBehavior NullTargetBehavior = AUESettings.ENullTargetBehavior.Exception;
 
         [SerializeField]
         private byte _id;
@@ -193,6 +194,18 @@ namespace AUE
         {
             try
             {
+                if (!AUERuntimeUtils.IsUnityObjectValid(_target))
+                {
+                    if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Exception)
+                    {
+                        throw new Exception($"[{_identifier}] Unset target for method call ({_methodName})");
+                    }
+                    else // if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Ignore)
+                    {
+                        return null;
+                    }
+                }
+
                 Type targetType = GetTargetType();
                 if (targetType == null)
                 {
@@ -209,7 +222,7 @@ namespace AUE
                 }
                 if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
-                    throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
+                    throw new Exception($"[{_identifier}] Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
                 }
                 return mi;
             }
@@ -217,11 +230,8 @@ namespace AUE
             {
                 Debug.LogException(ex);
                 string error = $"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}";
-#if UNITY_EDITOR
-                error = $"[{UnityEngine.SceneManagement.SceneManager.GetActiveScene().path}]" + error;
-#endif
                 Debug.LogError(error);
-                return null;                    
+                return null;
             }
         }
 #endif
