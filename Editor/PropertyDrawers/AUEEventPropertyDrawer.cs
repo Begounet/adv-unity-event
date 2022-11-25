@@ -13,7 +13,7 @@ namespace AUE
     [CustomPropertyDrawer(typeof(BaseAUEEvent), useForChildren: true)]
     public class AUEEventPropertyDrawer : PropertyDrawer
     {
-        private const string EventsSPName = "_events";
+        public const string EventsSPName = "_events";
 
         private class State
         {

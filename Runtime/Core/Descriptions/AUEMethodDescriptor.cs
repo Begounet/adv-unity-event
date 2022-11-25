@@ -24,5 +24,26 @@ namespace AUE.Descriptors
             MethodName = methodName;
             Parameters = parameters;
         }
+
+        public AUEMethodDescriptor(UnityEngine.Object target, string methodName, BindingFlags bindingFlags, AUEParameterDescriptor[] parameters)
+            : this(target, target.GetType().GetMethod(methodName, bindingFlags), bindingFlags, parameters)
+        { }
+
+        public AUEMethodDescriptor(UnityEngine.Object target, MethodInfo methodInfo, BindingFlags bindingFlags, AUEParameterDescriptor[] parameters)
+        {
+            Target = target;
+            MethodName = methodInfo.Name;
+            ReturnType = methodInfo.ReturnType;
+            
+            ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+            
+            ArgumentTypes = new Type[parameterInfos.Length];
+            for (int i = 0; i < parameterInfos.Length; ++i)
+            {
+                ArgumentTypes[i] = parameterInfos[i].ParameterType;
+            }
+
+            Parameters = parameters;
+        }
     }
 }
