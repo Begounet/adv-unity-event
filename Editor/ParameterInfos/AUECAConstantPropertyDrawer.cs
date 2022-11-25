@@ -99,7 +99,6 @@ namespace AUE
             }
         }
 
-#if USE_INTERFACE_PROPERTY_DRAWER
         private Rect DrawTypeInstantiation(Rect position)
         {
             var options = new TypeSelectorAdvancedDropdown.Settings()
@@ -110,7 +109,7 @@ namespace AUE
 
             var constantValue = _constantValueSP.managedReferenceValue as IConstantValue;
             Type constantValueType = (constantValue.Value != null ? constantValue.Value.GetType() : null);
-            position = TypeSelectorGUI.Draw(position, constantValueType, options.ConstraintType, options, out bool hasSelectedType, out Type selectedType);
+            position = TypeSelectorGUI.Draw(position, constantValueType, options, out bool hasSelectedType, out Type selectedType);
             if (hasSelectedType)
             {
                 if (selectedType == null)
@@ -125,7 +124,6 @@ namespace AUE
 
             return position;
         }
-#endif
 
         private void Initialize()
         {

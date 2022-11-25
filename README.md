@@ -8,10 +8,12 @@ Lightweight but more powerful version of Unity Event.
 - Can directly use generic `AUEEvent<T>` instead of a creating a new class inheriting from `UnityEvent`
 - Method searcher popup (`AddComponent`-like)
 - Can use `AUEGet<TResult>` to create a method's result
+- Supports AOT
 - Custom parameters:
   - Constant: support all basics native constants + UnityEngine.Object + custom serializable class
   - Dynamic: allow to select where you pass your method arguments
   - Method: use nested method as parameter
+  - Property: use a property or nested property (following a path of properties and fields)
 
 [Changelog](Documentation~/Changelog.md)
 
@@ -20,7 +22,6 @@ Lightweight but more powerful version of Unity Event.
 *Minimum version Unity required: 2019.3*
 
 - [Type Codebase](https://gitea.apperture.fr:3062/Apperture/type-codebase)
-- [Interface Property Drawer](https://gitea.apperture.fr:3062/Apperture/interface-property-drawer) *(Optional)*
 
 ## Screenshots
 
@@ -61,3 +62,6 @@ private AUEGet<float> _floatGetter;
 private AUEGet<int, string> _intGetter; 
 ```
 
+## Advanced
+
+- [Editor](Documentation~/Editor.md)

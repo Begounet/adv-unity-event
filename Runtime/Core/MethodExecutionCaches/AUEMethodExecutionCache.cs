@@ -8,7 +8,7 @@ namespace AUE
     {
         private readonly AUESimpleMethod _aueMethod;
 
-        private UnityEngine.Object _cachedTarget;
+        private object _cachedTarget;
         private MethodInfo _cachedMethodInfo;
         private object[] _cachedParameters;
 

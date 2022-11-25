@@ -15,8 +15,20 @@ namespace AUE
             Argument
         }
 
+        public enum EExecutionSafeMode
+        {
+            [EnumDescription("Throws exception if any issue.")]
+            Unsafe,
+
+            [EnumDescription("Exception is catched and default value (null) is used")]
+            Default
+        }
+
         [SerializeField]
-        private ESourceMode _sourceMode;
+        private ESourceMode _sourceMode = ESourceMode.Target;
+
+        [SerializeField]
+        private EExecutionSafeMode _executionSafeMode = EExecutionSafeMode.Unsafe;
 
         [SerializeField]
         private UnityEngine.Object _target;
@@ -57,7 +69,7 @@ namespace AUE
                 return null;
             }
 
-            return _propertyCache.GetValue(src);
+            return _propertyCache.GetValue(_executionSafeMode, src);
         }
 
         private void BuildCache(Type targetType)

@@ -20,12 +20,7 @@ namespace AUE
         public IEnumerable<Type> ArgumentTypes => _argumentTypes.Select((argType) => argType.Type);
 
         [SerializeField]
-        private BindingFlags _bindingFlags =
-            BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        private BindingFlags _bindingFlags = DefaultBindingFlags.AUEEvent;
         public BindingFlags BindingFlags
         {
             get => _bindingFlags;

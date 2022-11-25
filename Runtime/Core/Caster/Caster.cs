@@ -58,7 +58,7 @@ namespace AUE
             {
                 typeof(float), new CastItem[]
                 {
-                    new CastItem<int, float, FloatToIntCastSettings>((obj, s) => s.Cast(obj)),
+                    new CastItem<float, int, FloatToIntCastSettings>((obj, s) => s.Cast(obj)),
                 }
             }
         };

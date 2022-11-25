@@ -88,6 +88,26 @@ namespace AUE
 
             return settings;
         }
+
+        public static T GetSettings<T>() where T : ScriptableObject
+        {
+            T settings = null;
+
+            string[] settingsPaths = AssetDatabase.FindAssets($"t:{typeof(T).Name}");
+            if (settingsPaths.Length == 0)
+            {
+                return settings;
+            }
+
+            if (settingsPaths.Length > 1)
+            {
+                Debug.LogWarning($"Multiple {typeof(T).Name} have been found. Should be only one in the project.");
+            }
+
+            string settingsPath = AssetDatabase.GUIDToAssetPath(settingsPaths[0]);
+            settings = AssetDatabase.LoadAssetAtPath<T>(settingsPath);
+            return settings;
+        }
     }
 }
 

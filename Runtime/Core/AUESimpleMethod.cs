@@ -17,6 +17,7 @@ namespace AUE
         public static bool IsRegisteringMethods = false;
         public static HashSet<MethodInfo> RegisteredMethods = new HashSet<MethodInfo>();
         public static HashSet<MemberInfo> RegisteredMembers = new HashSet<MemberInfo>();
+        public static AUESettings.ENullTargetBehavior NullTargetBehavior = AUESettings.ENullTargetBehavior.Exception;
 
         [SerializeField]
         private byte _id;
@@ -54,14 +55,7 @@ namespace AUE
         }
 
         [SerializeField]
-        protected BindingFlags _bindingFlags = 
-            BindingFlags.Public 
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        protected BindingFlags _bindingFlags = DefaultBindingFlags.AUESimpleMethod;
         public BindingFlags BindingFlags { get => _bindingFlags; set => _bindingFlags = value; }
 
         // Set by the property drawer when method is selected
@@ -108,7 +102,20 @@ namespace AUE
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValid()
-            => ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+        {
+#if UNITY_EDITOR
+            // May happen not being on main thread during AOT registering.
+            // In that special case, ignore target check because it will not work during serialization step.
+            if (!UnityEditorInternal.InternalEditorUtility.CurrentThreadIsMainThread())
+            {
+                return (_staticType.IsValidType && !string.IsNullOrWhiteSpace(_methodName));
+            }
+            else
+#endif
+            {
+                return ((_staticType.IsValidType || _target != null) && !string.IsNullOrWhiteSpace(_methodName));
+            }
+        }
 
         internal void SetDirty()
         {
@@ -151,7 +158,7 @@ namespace AUE
         {
             Type targetType = GetTargetType();
             Type[] methodParameterTypes = GenerateMethodParameterTypes();
-            return targetType.GetMethod(_methodName, methodParameterTypes);
+            return targetType.GetMethod(_methodName, _bindingFlags, binder: null, methodParameterTypes, modifiers: null);
         }
 
         internal MethodInfo GetSafeMethod()
@@ -163,7 +170,7 @@ namespace AUE
             }
 
             Type[] parameterTypes = _parameterInfos.Where((pi) => pi.ParameterType != null).Select((pi) => pi.ParameterType).ToArray();
-            return targetType.GetMethod(_methodName, parameterTypes);
+            return targetType.GetMethod(_methodName, _bindingFlags, binder: null, parameterTypes, modifiers: null);
         }
 
         private Type GetTargetType()
@@ -187,11 +194,23 @@ namespace AUE
 #endif
         }
 
-#if DEVELOPMENT_BUILD && AUE_SAFE
+#if UNITY_EDITOR || (DEVELOPMENT_BUILD && AUE_SAFE)
         internal MethodInfo GetSafeVerboseMethod()
         {
             try
             {
+                if (!AUERuntimeUtils.IsUnityObjectValid(_target))
+                {
+                    if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Exception)
+                    {
+                        throw new Exception($"[{_identifier}] Unset target for method call ({_methodName})");
+                    }
+                    else // if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Ignore)
+                    {
+                        return null;
+                    }
+                }
+
                 Type targetType = GetTargetType();
                 if (targetType == null)
                 {
@@ -201,18 +220,23 @@ namespace AUE
                 Type[] parameterTypes = _parameterInfos
                     .Select((pi) => pi.ParameterType).ToArray();
 
-                MethodInfo mi = targetType.GetMethod(_methodName, parameterTypes);
+                MethodInfo mi = targetType.GetMethod(_methodName, _bindingFlags, binder: null, parameterTypes, modifiers: null);
+                if (mi == null)
+                {
+                    throw new InvalidOperationException();
+                }
                 if (_returnType != null && (_returnType.IsValidType && !_returnType.Type.IsAssignableFrom(mi.ReturnType)))
                 {
-                    throw new Exception($"Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
+                    throw new Exception($"[{_identifier}] Unexpected method return type {mi.ReturnType.FullName}. Expected {_returnType.Type.FullName}");
                 }
                 return mi;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}");
                 Debug.LogException(ex);
-                return null;                    
+                string error = $"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}";
+                Debug.LogError(error);
+                return null;
             }
         }
 #endif
@@ -220,7 +244,7 @@ namespace AUE
 #if UNITY_EDITOR
         protected virtual void RegisterForAOT()
         {
-            MethodInfo mi = GetSafeMethod();
+            MethodInfo mi = GetSafeVerboseMethod();
             if (mi != null)
             {
                 RegisteredMethods.Add(mi);

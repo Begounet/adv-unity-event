@@ -11,11 +11,7 @@ namespace AUE
         [SerializeField]
         private AUEMethod _method = new AUEMethod()
         {
-            BindingFlags = BindingFlags.Public
-                    | BindingFlags.NonPublic
-                    | BindingFlags.Instance
-                    | BindingFlags.GetProperty
-                    | BindingFlags.GetField
+            BindingFlags = DefaultBindingFlags.AUEGet
         };
 
         protected T Invoke<T>(params object[] args)

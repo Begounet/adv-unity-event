@@ -30,18 +30,32 @@ namespace AUE
         private ICacheItem[] _items;
         public bool IsValid { get; private set; }
 
-        public object GetValue(object target)
+        public object GetValue(AUECAProperty.EExecutionSafeMode executionSafeMode, object target)
         {
             if (!IsValid)
             {
                 return null;
             }
 
-            for (int i = 0; i < _items.Length; ++i)
+            try
             {
-                target = _items[i].GetValue(target);
+                for (int i = 0; i < _items.Length; ++i)
+                {
+                    target = _items[i].GetValue(target);
+                }
+                return target;
             }
-            return target;
+            catch (Exception ex)
+            {
+                switch (executionSafeMode)
+                {
+                    case AUECAProperty.EExecutionSafeMode.Default:
+                        return null;
+                    default:
+                    case AUECAProperty.EExecutionSafeMode.Unsafe:
+                        throw ex;
+                }
+            }
         }
 
         public void BuildCache(Type targetType, string propertyPath)
@@ -58,7 +72,7 @@ namespace AUE
 
         private bool BuildCacheRecursive(Type targetType, string[] propertyPath, int startIndex)
         {
-            BindingFlags bf = BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            BindingFlags bf = DefaultBindingFlags.GetProperty;
 
             string propertyName = propertyPath[startIndex];
             Type propertyType = null;

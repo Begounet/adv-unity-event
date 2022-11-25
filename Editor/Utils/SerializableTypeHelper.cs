@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace AUE
 {
-	public class SerializableTypeHelper
+	public static class SerializableTypeHelper
     {
         public const string SerializedTypeFullNameSPName = "_typeFullname";
 

@@ -62,7 +62,10 @@ namespace AUE
 
         private void InitializeAllCastSettings(SerializedProperty property)
         {
-            if (_allCastSettings != null)
+            var aueRootSP = AUEUtils.FindAUERootInParent(property);
+            var argumentTypesSP = aueRootSP.FindPropertyRelative(AUEUtils.ArgumentTypesSPName);
+
+            if (_allCastSettings != null && _allCastSettingsSP != null && _allCastSettingsSP.arraySize == argumentTypesSP.arraySize)
             {
                 return;
             }

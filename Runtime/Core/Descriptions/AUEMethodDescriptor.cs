@@ -12,14 +12,7 @@ namespace AUE.Descriptors
         public Type[] ArgumentTypes { get; set; }
         public AUEParameterDescriptor[] Parameters { get; set; }
 
-        public BindingFlags BindingFlags { get; set; } =
-            BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+        public BindingFlags BindingFlags { get; set; } = DefaultBindingFlags.AUESimpleMethod;
 
         public UnityEventCallState CallState { get; set; } = UnityEventCallState.RuntimeOnly;
 
@@ -29,6 +22,27 @@ namespace AUE.Descriptors
             ArgumentTypes = argumentTypes;
             ReturnType = returnType;
             MethodName = methodName;
+            Parameters = parameters;
+        }
+
+        public AUEMethodDescriptor(UnityEngine.Object target, string methodName, BindingFlags bindingFlags, AUEParameterDescriptor[] parameters)
+            : this(target, target.GetType().GetMethod(methodName, bindingFlags), bindingFlags, parameters)
+        { }
+
+        public AUEMethodDescriptor(UnityEngine.Object target, MethodInfo methodInfo, BindingFlags bindingFlags, AUEParameterDescriptor[] parameters)
+        {
+            Target = target;
+            MethodName = methodInfo.Name;
+            ReturnType = methodInfo.ReturnType;
+            
+            ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+            
+            ArgumentTypes = new Type[parameterInfos.Length];
+            for (int i = 0; i < parameterInfos.Length; ++i)
+            {
+                ArgumentTypes[i] = parameterInfos[i].ParameterType;
+            }
+
             Parameters = parameters;
         }
     }

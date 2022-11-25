@@ -1,5 +1,27 @@
 # Changelogs
 
+## 1.3.1
+
+- Add:
+  - Log more details when an error occurs with an invalid method (can even provide the scene path when in editor)
+  - Provides a way to defines how to react to an exception being raised from a Property custom argument (ie. if null occurs in the middle of path to the property).
+  - Add the static `BoolSH.Invert` method to easily invert a boolean value.
+  - `AUEFrontUtils` to manage `AUEEvent` and `AUEMethod` from external editor scripts easily and in a safe way.
+- Fixes:
+  - Invalid cast from float to integer
+  - Correctly use Binding Flags to get the AUE methods
+  - Static binding flags was not set by default in `AUESimpleMethod`
+  - Reset correctly cast settings when targeted method's parameters have changed
+  - Fix method parameters wrongly registered for AOT
+  - Update correctly the method name if the argument types change
+  - Stop checking target validity when registering for AOT (because it is currently not possible from the serialization system)
+  - Fix `AUEMethod` issues when being in the same array of `AUEEvent`. Modifying one was modifying the others.
+- Refacto:
+  - `SerializableType` now use the `TypeSelectorGUI` to select a type.
+  - Code cleaning and minor stuff
+  - Improve overall stability (with a better error management and other fixes)
+  - Use static `BindingFlags` for default value instead of using the same combos of `BindingFlags` at multiple place.
+
 ## 1.3.0
 
 - Supports Property path as custom argument.
