@@ -93,11 +93,11 @@ namespace AUE
             }
             catch (Exception ex)
             {
+                Debug.LogError($"Exception raised from {nameof(AUESimpleMethod)} ({PrettyName}): {_identifier}");
                 Debug.LogException(ex);
                 return null;
             }
 #endif
-
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
