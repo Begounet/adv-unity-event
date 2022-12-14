@@ -27,7 +27,7 @@ namespace AUE
 
             public ArgumentCacheWrapper(FieldInfo argumentsCacheFI)
             {
-                var bf = BindingFlags.NonPublic | BindingFlags.Instance;
+                var bf = DefaultBindingFlags.PrivateFields;
                 _argumentsCacheFI = argumentsCacheFI;
                 var argumentsCacheType = argumentsCacheFI.FieldType;
                 _boolFI = argumentsCacheType.GetField("m_BoolArgument", bf);
@@ -67,7 +67,7 @@ namespace AUE
                 return;
             }
 
-            var privateFieldBF = BindingFlags.Instance | BindingFlags.NonPublic;
+            var privateFieldBF = DefaultBindingFlags.PrivateFields;
             Type eventType = uEvent.GetType();
 
             FieldInfo persistentCallsFI = eventType.GetFieldInfoInHierarchy("m_PersistentCalls");
@@ -255,7 +255,7 @@ namespace AUE
 
         private static FieldInfo GetFieldInfoInHierarchy(this Type src, string name)
         {
-            var privateFieldBF = BindingFlags.Instance | BindingFlags.NonPublic;
+            var privateFieldBF = DefaultBindingFlags.PrivateFields;
             FieldInfo fi = src.GetField(name, privateFieldBF);
             while (src != null && fi == null)
             {

@@ -31,7 +31,7 @@ namespace AUE
             }
         }
 
-        public bool IsBound => (_events?.Count > 0);
+        public virtual bool IsBound => (_events?.Count > 0);
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
         public string PrettyName => GeneratePrettyName();
@@ -61,13 +61,29 @@ namespace AUE
 
         public virtual void OnBeforeSerialize()
         {
+            InitBindingFlagsIFN();
             SynchronizeToEvents();
             OnDefineEventsSignature();
         }
 
         public virtual void OnAfterDeserialize()
         {
+            InitBindingFlagsIFN();
             SynchronizeToEvents();
+        }
+
+        /// <summary>
+        /// Exists because of Unity bad serialization.
+        /// When created as an array item, serialized fields are not
+        /// correctly initialized to their default values.
+        /// So we have to ensure it ourselves.
+        /// </summary>
+        private void InitBindingFlagsIFN()
+        {
+            if (_bindingFlags == BindingFlags.Default)
+            {
+                _bindingFlags = DefaultBindingFlags.AUEEvent;
+            }
         }
 
         protected virtual void OnDefineEventsSignature() { }
@@ -84,7 +100,7 @@ namespace AUE
             }
         }
 
-        private string GeneratePrettyName()
+        protected virtual string GeneratePrettyName()
         {
             var sb = UnsafeGenericPool<StringBuilder>.Get();
             sb.Clear();

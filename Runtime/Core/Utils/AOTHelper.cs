@@ -16,7 +16,7 @@ namespace AUE
 
         private static void RegisterMemberInfosInPropertyPathRecursive(HashSet<MemberInfo> outPropertyPathMembers, Type targetType, string[] propertyPath, int startIndex)
         {
-            BindingFlags bf = DefaultBindingFlags.GetProperty;
+            BindingFlags bf = DefaultBindingFlags.DefaultVisibility | BindingFlags.GetProperty | BindingFlags.Instance;
 
             string propertyName = propertyPath[startIndex];
             Type propertyType = null;

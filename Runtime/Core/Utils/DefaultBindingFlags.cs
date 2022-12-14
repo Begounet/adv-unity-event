@@ -1,38 +1,37 @@
 using System.Reflection;
+using UnityEngine;
 
 namespace AUE
 {
     public static class DefaultBindingFlags
     {
-        public static BindingFlags GetProperty =
-            BindingFlags.GetProperty 
-            | BindingFlags.Public 
-            | BindingFlags.NonPublic 
-            | BindingFlags.Instance;
-
-        public static BindingFlags AUEGet =
+        public const BindingFlags DefaultVisibility =
             BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.GetProperty
-            | BindingFlags.GetField;
+            | BindingFlags.NonPublic;
 
-        public static BindingFlags AUEEvent =
-            BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.Static
+        public const BindingFlags DefaultScope =
+            BindingFlags.Instance
+            | BindingFlags.Static;
+
+        public const BindingFlags AUEEvent =
+            DefaultVisibility
+            | DefaultScope
             | BindingFlags.SetProperty
             | BindingFlags.SetField;
 
-        public static BindingFlags AUESimpleMethod =
-            BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Instance
-            | BindingFlags.Static
+        public const BindingFlags AUESimpleMethod =
+            AUEEvent
             | BindingFlags.GetField
-            | BindingFlags.GetProperty
-            | BindingFlags.SetProperty
-            | BindingFlags.SetField;
+            | BindingFlags.GetProperty;
+
+        public const BindingFlags AUEGet =
+             DefaultVisibility
+            | DefaultScope
+            | BindingFlags.GetField
+            | BindingFlags.GetProperty;
+
+        public const BindingFlags PrivateFields =
+            BindingFlags.NonPublic 
+            | BindingFlags.Instance;
     }
 }

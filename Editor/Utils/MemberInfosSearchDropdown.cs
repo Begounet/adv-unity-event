@@ -17,7 +17,7 @@ namespace AUE
         public MemberInfosSearchDropdown(SerializedProperty property, 
             Type type, object userData,
             MemberInfoSelectionDelegate onItemSelected,
-            BindingFlags bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            BindingFlags bf = DefaultBindingFlags.DefaultVisibility | BindingFlags.Instance)
             : base(new AdvancedDropdownState())
         {
             _property = property;

@@ -235,6 +235,9 @@ namespace AUE
             {
                 Debug.LogException(ex);
                 string error = $"[{_identifier}] Could not get method {_methodName} from class {GetTargetType()?.FullName ?? "unknown"} from assembly {GetTargetType()?.Assembly.ToString() ?? "unknown"}";
+#if UNITY_EDITOR
+                error = $"[{UnityEngine.SceneManagement.SceneManager.GetActiveScene().path}]" + error;
+#endif
                 Debug.LogError(error);
                 return null;
             }
