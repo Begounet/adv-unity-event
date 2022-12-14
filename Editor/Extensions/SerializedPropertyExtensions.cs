@@ -49,7 +49,7 @@ namespace AUE
                 targetType = target.GetType();
             }
 
-            FieldInfo fi = targetType.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            FieldInfo fi = targetType.GetField(name, BindingFlags.Instance | DefaultBindingFlags.DefaultVisibility);
             if (fi != null)
             {
                 return fi.GetValue(target);
@@ -113,7 +113,7 @@ namespace AUE
                 targetType = target.GetType();
             }
 
-            FieldInfo fi = targetType.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            FieldInfo fi = targetType.GetField(name, BindingFlags.Instance | DefaultBindingFlags.DefaultVisibility);
             if (fi != null)
             {
                 return fi;

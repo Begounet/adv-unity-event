@@ -177,13 +177,7 @@ namespace AUE
             methodSP.FindPropertyRelative(AUEUtils.MethodNameSPName).stringValue = string.Empty;
             SerializableTypeHelper.SetType(methodSP.FindPropertyRelative(AUEUtils.ReturnTypeSPName), typeof(void));
             methodSP.FindPropertyRelative(AUEUtils.ParameterInfosSPName).arraySize = 0;
-            methodSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)
-                (BindingFlags.Public
-                | BindingFlags.NonPublic
-                | BindingFlags.Instance
-                | BindingFlags.Static
-                | BindingFlags.GetField
-                | BindingFlags.GetProperty);
+            methodSP.FindPropertyRelative(AUEUtils.BindingFlagsSPName).intValue = (int)DefaultBindingFlags.AUEGet;
         }
     }
 }
