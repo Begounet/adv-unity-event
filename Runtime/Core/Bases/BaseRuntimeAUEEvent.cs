@@ -14,10 +14,18 @@ namespace AUE
         public void RemoveAction(TDelegate callback) => RuntimeCallbacks = (TDelegate)Delegate.Remove(RuntimeCallbacks, callback);
 
         public override bool IsBound => base.IsBound || (RuntimeCallbacks != null);
-        protected override string GeneratePrettyName()
+
+        public override string PrettyName
         {
-            Delegate[] runtimeInvokeList = RuntimeCallbacks.GetInvocationList();
-            return PrettyNameHelper.GeneratePrettyName(this, runtimeInvokeList);
+            get
+            {
+                if (RuntimeCallbacks != null)
+                {
+                    Delegate[] runtimeInvokeList = RuntimeCallbacks.GetInvocationList();
+                    return PrettyNameHelper.GeneratePrettyName(this, runtimeInvokeList);
+                }
+                return base.PrettyName;
+            }
         }
     }
 }
