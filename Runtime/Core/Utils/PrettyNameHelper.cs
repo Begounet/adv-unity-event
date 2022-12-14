@@ -78,11 +78,11 @@ namespace AUE
             if (aueEvent.Events.Count == 0 && invokeList.Length == 0)
             {
                 // Will return that there is no event
-                return aueEvent.PrettyName;
+                return aueEvent.GeneratePrettyName();
             }
             if (aueEvent.Events.Count > 0)
             {
-                prettyName = aueEvent.PrettyName;
+                prettyName = aueEvent.GeneratePrettyName();
             }
             if (invokeList.Length > 0)
             {

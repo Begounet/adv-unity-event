@@ -1,5 +1,10 @@
 # Changelogs
 
+## 1.3.3
+
+- Fix:
+  - Fix critical issue with `AUEEvent`'s pretty name causing a stack overflow exception
+
 ## 1.3.2
 
 - Add:
