@@ -61,13 +61,29 @@ namespace AUE
 
         public virtual void OnBeforeSerialize()
         {
+            InitBindingFlagsIFN();
             SynchronizeToEvents();
             OnDefineEventsSignature();
         }
 
         public virtual void OnAfterDeserialize()
         {
+            InitBindingFlagsIFN();
             SynchronizeToEvents();
+        }
+
+        /// <summary>
+        /// Exists because of Unity bad serialization.
+        /// When created as an array item, serialized fields are not
+        /// correctly initialized to their default values.
+        /// So we have to ensure it ourselves.
+        /// </summary>
+        private void InitBindingFlagsIFN()
+        {
+            if (_bindingFlags == BindingFlags.Default)
+            {
+                _bindingFlags = DefaultBindingFlags.AUEEvent;
+            }
         }
 
         protected virtual void OnDefineEventsSignature() { }
