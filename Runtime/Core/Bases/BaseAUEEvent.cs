@@ -31,7 +31,7 @@ namespace AUE
             }
         }
 
-        public bool IsBound => (_events?.Count > 0);
+        public virtual bool IsBound => (_events?.Count > 0);
 
         [System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
         public string PrettyName => GeneratePrettyName();
@@ -100,7 +100,7 @@ namespace AUE
             }
         }
 
-        private string GeneratePrettyName()
+        protected virtual string GeneratePrettyName()
         {
             var sb = UnsafeGenericPool<StringBuilder>.Get();
             sb.Clear();
