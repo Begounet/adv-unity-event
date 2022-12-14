@@ -9,11 +9,13 @@ Lightweight but more powerful version of Unity Event.
 - Method searcher popup (`AddComponent`-like)
 - Can use `AUEGet<TResult>` to create a method's result
 - Supports AOT
+- Supports runtime event subscription
 - Custom parameters:
   - Constant: support all basics native constants + UnityEngine.Object + custom serializable class
   - Dynamic: allow to select where you pass your method arguments
   - Method: use nested method as parameter
   - Property: use a property or nested property (following a path of properties and fields)
+- Provide some static helpers to use directly in AUE methods for common operation (ie. `BoolSH.Invert` to invert a boolean value).
 
 [Changelog](Documentation~/Changelog.md)
 

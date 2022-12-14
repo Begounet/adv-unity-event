@@ -1,5 +1,14 @@
 # Changelogs
 
+## 1.3.2
+
+- Add:
+  - Can subscribe to `AUEEvent` at runtime.
+  - Unit Tests for pretty name generation + `AUEEvent` runtime event subscription
+  - In editor, display the scene in which an error in `AUESimpleMethod` could occur.
+- Fix:
+  - Force binding flags initialization on `AUEEvent` because Unity does not initialize serialized array's items.
+
 ## 1.3.1
 
 - Add:
