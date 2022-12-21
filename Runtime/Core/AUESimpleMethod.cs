@@ -201,14 +201,18 @@ namespace AUE
             {
                 if (!AUERuntimeUtils.IsUnityObjectValid(_target))
                 {
+#if UNITY_EDITOR
                     if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Exception)
                     {
+#endif
                         throw new Exception($"[{_identifier}] Unset target for method call ({_methodName})");
+#if UNITY_EDITOR
                     }
                     else // if (NullTargetBehavior == AUESettings.ENullTargetBehavior.Ignore)
                     {
                         return null;
                     }
+#endif
                 }
 
                 Type targetType = GetTargetType();
