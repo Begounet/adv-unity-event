@@ -14,6 +14,6 @@
   },
   "type": "tool",
   "dependencies": {
-    "com.apperture.type-codebase": ""
+    "com.apperture.type-codebase": "1.0.0"
   }
 }

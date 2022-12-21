@@ -1,7 +1,9 @@
 {
     "name": "AdvUnityEvent.Runtime",
     "rootNamespace": "AUE",
-    "references": [],
+    "references": [
+        "GUID:1282bd4e91c288843b5b072bc854f6d8"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
