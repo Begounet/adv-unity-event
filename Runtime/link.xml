@@ -1,0 +1,8 @@
+<linker>
+	<!-- UnityEngine.Object.m_CachedPtr is used to check if an UnityEngine.Object is valid at runtime. -->
+	<assembly fullname="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+		<type fullname="UnityEngine.Object">
+			<field name="m_CachedPtr" />
+		</type>
+	</assembly>
+</linker>
