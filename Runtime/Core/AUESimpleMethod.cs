@@ -94,7 +94,9 @@ namespace AUE
             }
             catch (Exception ex)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.LogError($"Exception raised from {nameof(AUESimpleMethod)} ({PrettyName}): {_identifier}");
+#endif
                 Debug.LogException(ex);
                 return null;
             }
