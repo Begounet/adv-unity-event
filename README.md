@@ -61,7 +61,30 @@ private AUEGet<float> _floatGetter;
 
 // Create a method that will return a string, and allow to pass an int argument.
 [SerializeField]
-private AUEGet<int, string> _intGetter; 
+private AUEGet<int, string> _intGetter;
+```
+
+You can even make dynamic customizable `AUEEvent`. It can be useful to make kind of generic events :
+
+```csharp
+[SerializeField]
+private SerializableType _parameterType;
+
+[SerializeField]
+private CustomizableAUEEvent _customizableEvent;
+
+private void OnValidate()
+{
+    if (_parameterType.IsValidType)
+    {
+    	_customizableEvent.DefineParameterTypes(_parameterType.Type);
+    }
+}
+
+void Start()
+{
+    _customizableEvent.Invoke(value); // value must be of the matching type!
+}
 ```
 
 ## Advanced
