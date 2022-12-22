@@ -7,6 +7,9 @@ namespace AUE
     [Serializable]
     public class AUEEvent : BaseRuntimeAUEEvent<Action>
     {
+        public AUEEvent() { }
+        public AUEEvent(Action callback) => AddAction(callback);
+
         public void Invoke()
         {
             base.Invoke();
@@ -20,6 +23,9 @@ namespace AUE
     [Serializable]
     public class AUEEvent<T> : BaseRuntimeAUEEvent<Action<T>>
     {
+        public AUEEvent() { }
+        public AUEEvent(Action<T> callback) => AddAction(callback);
+
         public void Invoke(T arg)
         {
             base.Invoke(arg);
@@ -33,6 +39,9 @@ namespace AUE
     [Serializable]
     public class AUEEvent<T0, T1> : BaseRuntimeAUEEvent<Action<T0, T1>>
     {
+        public AUEEvent() { }
+        public AUEEvent(Action<T0, T1> callback) => AddAction(callback);
+
         public void Invoke(T0 arg1, T1 arg2)
         {
             base.Invoke(arg1, arg2);
@@ -46,6 +55,9 @@ namespace AUE
     [Serializable]
     public class AUEEvent<T0, T1, T2> : BaseRuntimeAUEEvent<Action<T0, T1, T2>>
     {
+        public AUEEvent() { }
+        public AUEEvent(Action<T0, T1, T2> callback) => AddAction(callback);
+
         public void Invoke(T0 arg1, T1 arg2, T2 arg3)
         {
             base.Invoke(arg1, arg2, arg3);
@@ -59,6 +71,9 @@ namespace AUE
     [Serializable]
     public class AUEEvent<T0, T1, T2, T3> : BaseRuntimeAUEEvent<Action<T0, T1, T2, T3>>
     {
+        public AUEEvent() { }
+        public AUEEvent(Action<T0, T1, T2, T3> callback) => AddAction(callback);
+
         public void Invoke(T0 arg1, T1 arg2, T2 arg3, T3 arg4)
         {
             base.Invoke(arg1, arg2, arg3, arg4);
