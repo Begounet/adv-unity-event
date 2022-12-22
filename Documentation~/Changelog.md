@@ -1,5 +1,17 @@
 # Changelogs
 
+## 1.4.0
+
+- Add:
+  - Support for runtime `AUEEvent`
+  - Log more details on Property argument evaluation errors
+  - Log more details on `AUESimpleMethod` errors.
+- Refacto:
+  - `SerializableType` is now in the `TypeCodebase` package.
+- Fix:
+  - Build issue due to `AUESimpleMethod._identifier` and `AUESimpleMethod.NullTargetBehavior` not being build in some build mode.
+  - Use `UnityEngine.Object.m_CachedPtr` instead of `UnityEngine.Object.m_InstanceID` because could not make it for AOT platforms.
+
 ## 1.3.3
 
 - Fix:

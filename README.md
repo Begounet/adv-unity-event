@@ -9,7 +9,7 @@ Lightweight but more powerful version of Unity Event.
 - Method searcher popup (`AddComponent`-like)
 - Can use `AUEGet<TResult>` to create a method's result
 - Supports AOT
-- Supports runtime event subscription
+- Supports runtime event subscription (and are displayed in the Inspector)
 - Custom parameters:
   - Constant: support all basics native constants + UnityEngine.Object + custom serializable class
   - Dynamic: allow to select where you pass your method arguments
