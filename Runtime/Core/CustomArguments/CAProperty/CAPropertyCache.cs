@@ -1,6 +1,6 @@
-using UnityEngine;
 using System;
 using System.Reflection;
+using System.Linq;
 
 namespace AUE
 {
@@ -9,6 +9,7 @@ namespace AUE
         private interface ICacheItem
         {
             object GetValue(object target);
+            public string PropertyName { get; }
         }
 
         private class PropertyCacheAccess : ICacheItem
@@ -17,6 +18,7 @@ namespace AUE
 
             public PropertyCacheAccess(PropertyInfo pi) { _pi = pi; }
             public object GetValue(object target) => _pi.GetValue(target);
+            public string PropertyName => _pi.Name;
         }
 
         private class FieldCacheAccess : ICacheItem
@@ -25,6 +27,7 @@ namespace AUE
 
             public FieldCacheAccess(FieldInfo fi) { _fi = fi; }
             public object GetValue(object target) => _fi.GetValue(target);
+            public string PropertyName => _fi.Name;
         }
 
         private ICacheItem[] _items;
@@ -39,9 +42,16 @@ namespace AUE
 
             try
             {
+                object initialTarget = target;
+                if (target == null)
+                {
+                    throw new ArgumentNullException(nameof(target));
+                }
+
                 for (int i = 0; i < _items.Length; ++i)
                 {
-                    target = _items[i].GetValue(target);
+                    target = _items[i].GetValue(target);                   
+                    CheckTargetValidity(initialTarget, target, i);                    
                 }
                 return target;
             }
@@ -56,6 +66,21 @@ namespace AUE
                         throw ex;
                 }
             }
+        }
+
+        private void CheckTargetValidity(object initialTarget, object target, int evaluationPathIndex)
+        {
+            // If target is null and it is not the last item in the list,
+            // it means that there is an issue or it cannot be evaluated further.
+            if (target != null && evaluationPathIndex + 1 == _items.Length)
+            {
+                return;
+            }
+
+            string evaluatedPropertyPath = initialTarget.GetType().Name + '.' + string.Join('.', _items.Take(evaluationPathIndex + 1).Select((item) => item.PropertyName));
+
+            string expectedPropertyPath = initialTarget.GetType().Name + '.' + string.Join('.', _items.Select((item) => item.PropertyName));
+            throw new InvalidOperationException($"Partial evaluation of path. Expected '{expectedPropertyPath}' but could evaluate only '{evaluatedPropertyPath}'");
         }
 
         public void BuildCache(Type targetType, string propertyPath)
