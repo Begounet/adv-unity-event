@@ -15,6 +15,7 @@ namespace AUE
     public class AUEEventPropertyDrawer : PropertyDrawer
     {
         public const string EventsSPName = "_events";
+        public const string RuntimeCallbacks = "RuntimeCallbacks";
 
         private class State
         {
@@ -22,6 +23,9 @@ namespace AUE
             public GUIContent Label;
             public bool IsStateInitialized = false;
             public Type[] CachedArgumentTypes;
+            public object Target;
+            public FieldInfo RuntimeCallbacksFI = null;
+            public bool HasRuntimeCallbacks => (Target != null && RuntimeCallbacksFI != null);
         }
 
         private Dictionary<string, State> _states = new Dictionary<string, State>();
@@ -35,6 +39,11 @@ namespace AUE
             InitializeState(property, state);
             float height = property.isExpanded ? state.ReorderableList.GetHeight() : EditorGUIUtility.singleLineHeight;
             height += EditorGUIUtility.standardVerticalSpacing;
+            if (property.isExpanded && state.HasRuntimeCallbacks)
+            {
+                height += EditorGUIUtility.standardVerticalSpacing;
+                height += GetRuntimeEventsHeight(state);
+            }
             return height;
         }
 
@@ -46,7 +55,15 @@ namespace AUE
             InitializeState(property, state);
             if (property.isExpanded)
             {
+                position.height = state.ReorderableList.GetHeight();
                 state.ReorderableList.DoList(position);
+
+                if (state.HasRuntimeCallbacks)
+                {
+                    position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                    position.height = GetRuntimeEventsHeight(state);
+                    DrawRuntimeEvents(state, position);
+                }
             }
             else
             {
@@ -210,9 +227,88 @@ namespace AUE
             if (!_states.TryGetValue(sp.propertyPath, out State state))
             {
                 state = new State();
+                CacheTarget(state, sp);
+                CacheStaticRuntimeCallbackInfos(state);
                 _states.Add(sp.propertyPath, state);
             }
             return state;
+        }
+
+        private void CacheTarget(State state, SerializedProperty sp)
+            => state.Target = sp.GetTarget();
+
+        private void CacheStaticRuntimeCallbackInfos(State state)
+        {
+            try
+            {
+                state.RuntimeCallbacksFI = state.Target.GetType().GetField(RuntimeCallbacks, BindingFlags.Instance | BindingFlags.NonPublic);
+            }
+            catch (Exception) { }
+        }
+
+        private float GetRuntimeEventsHeight(State state)
+        {
+            if (state.Target == null)
+            {
+                return 0.0f;
+            }
+
+            object runtimeCallbacksObj = state.RuntimeCallbacksFI.GetValue(state.Target);
+            if (runtimeCallbacksObj == null)
+            {
+                return 0.0f;
+            }
+            Delegate runtimeCallbacksAsDelegate = runtimeCallbacksObj as Delegate;
+            return runtimeCallbacksAsDelegate.GetInvocationList().Length * EditorGUIUtility.singleLineHeight;
+        }
+
+        private void DrawRuntimeEvents(State state, Rect position)
+        {
+            object runtimeCallbacksObj = state.RuntimeCallbacksFI.GetValue(state.Target);
+            if (runtimeCallbacksObj == null)
+            {
+                return;
+            }
+
+            Delegate runtimeCallbacksAsDelegate = runtimeCallbacksObj as Delegate;
+
+            position.height = EditorGUIUtility.singleLineHeight;
+            Delegate[] invokeList = runtimeCallbacksAsDelegate.GetInvocationList();
+            if (invokeList.Length == 0)
+            {
+                return;
+            }
+
+            // Draw a background
+            EditorGUI.DrawRect(position, Color.white * 0.2f);
+            for (int i = 0; i < invokeList.Length; ++i)
+            {
+                DrawDelegate(position, invokeList[i]);
+                position.y += EditorGUIUtility.singleLineHeight;
+            }
+        }
+
+        private static void DrawDelegate(Rect position, Delegate dlg)
+        {
+            EditorGUI.DrawRect(position, Color.white * 0.2f);
+
+            Rect nameRect = position;
+
+            EditorGUI.BeginDisabledGroup(disabled: true);
+
+            // Draw target field
+            object target = dlg.Target;
+            if (target is UnityEngine.Object targetUnityObj)
+            {
+                Rect targetRect = new Rect(position.x, position.y, EditorGUIUtility.fieldWidth, position.height);
+                nameRect = new Rect(position.x + targetRect.width + 2, position.y, position.width - targetRect.width - 2, position.height);
+                EditorGUI.ObjectField(targetRect, GUIContent.none, targetUnityObj, targetUnityObj.GetType(), allowSceneObjects: true);
+            }
+            EditorGUI.EndDisabledGroup();
+
+            // Draw name field
+            string name = PrettyNameHelper.GeneratePrettyName(dlg);
+            EditorGUI.TextField(nameRect, name);
         }
     }
 }
