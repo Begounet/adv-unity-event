@@ -10,7 +10,7 @@ namespace AUE
     {
         private static Regex ArrayIndexCapturePattern = new Regex(@"\[(\d*)\]");
 
-        public static T GetTarget<T>(this SerializedProperty prop)
+        public static object GetTarget(this SerializedProperty prop)
         {
             string[] propertyNames = prop.propertyPath.Split('.');
             object target = prop.serializedObject.targetObject;
@@ -29,7 +29,7 @@ namespace AUE
                     var targetAsArray = (IList)target;
                     if (arrayIndex < 0 || arrayIndex >= targetAsArray.Count)
                     {
-                        return default(T);
+                        return default;
                     }
 
                     target = targetAsArray[arrayIndex];
@@ -39,8 +39,11 @@ namespace AUE
                     target = GetField(target, propName);
                 }
             }
-            return (T)target;
+            return target;
         }
+
+        public static T GetTarget<T>(this SerializedProperty prop)
+            => (T)GetTarget(prop);
 
         private static object GetField(object target, string name, Type targetType = null)
         {
