@@ -118,7 +118,7 @@ namespace AUE
         {
             foreach (var mmd in methodGroups)
             {
-                groupItem.AddChild(new AdvancedDropdownItem(mmd.DisplayName) { id = metaIdx });
+                groupItem.AddChild(new AdvancedDropdownItem(BuildMethodDisplayName(mmd)) { id = metaIdx });
                 _itemMetaData.Add(metaIdx++, new ItemMetaData()
                 {
                     TargetInvokeInfo = targetInvokeInfo,
@@ -126,6 +126,9 @@ namespace AUE
                 });
             }
         }
+
+        private string BuildMethodDisplayName(MethodMetaData mmd)
+            => (mmd.MethodInfo.IsPublic ? "+" : "-") + " " + mmd.DisplayName;
 
         private int GetDeclaringTypeDepth(Type srcType, Type declaringType)
         {
