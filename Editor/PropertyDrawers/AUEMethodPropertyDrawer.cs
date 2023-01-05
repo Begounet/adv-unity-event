@@ -90,6 +90,7 @@ namespace AUE
 
             if (EditorGUI.EndChangeCheck())
             {
+                UpdateStaticType(property, targetSP.objectReferenceValue);
                 UpdateMethodName(property, null);
                 UpdateParameterInfos(property, null);
                 AUEMethodDatabaseUtils.UpdateMethodDatabase(AUEUtils.FindAUERootInParent(property));
@@ -101,6 +102,7 @@ namespace AUE
                 DrawMethodSelection(ref lineRect, targetSP.objectReferenceValue, property);
 
                 var parameterInfosSP = property.FindPropertyRelative(ParameterInfosSPName);
+
                 DrawParameterInfos(ref lineRect, property, parameterInfosSP);
             }
         }
