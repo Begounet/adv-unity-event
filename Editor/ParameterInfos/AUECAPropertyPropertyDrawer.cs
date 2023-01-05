@@ -10,6 +10,25 @@ namespace AUE
     [CustomPropertyDrawer(typeof(AUECAProperty))]
     public class AUECAPropertyPropertyDrawer : PropertyDrawer
     {
+        private class PropertyInfoCache
+        {
+            public AUECAProperty TargetProperty;
+            public List<MemberInfo> PropertyPathItems;
+
+            public SerializedProperty SourceModeSP;
+            public SerializedProperty ExecutionSafeModeSP;
+            public SerializedProperty TargetSP;
+            public SerializedProperty ArgIndexSP;
+            public SerializedProperty PropertyPathSP;
+            public string[] SourceOptions;
+            public GUIContent[] ExecutionSafeModeOptions;
+            public Type[] ArgTypes;
+
+            public Vector2 ScrollViewPosition;
+            public bool RequiresScrollView;
+            public string[] PropertyPath;
+        }
+
         public const string SourceModeSPName = "_sourceMode";
         public const string ExecutionSafeModeSPName = "_executionSafeMode";
         public const string TargetSPName = "_target";
@@ -26,70 +45,59 @@ namespace AUE
         private const int ReservedOptionsCount = 1;
         private const int TargetOptionIndex = 0;
 
-        private SerializedProperty _sourceModeSP;
-        private SerializedProperty _executionSafeModeSP;
-        private SerializedProperty _targetSP;
-        private SerializedProperty _argIndexSP;
-        private SerializedProperty _propertyPathSP;
-        private string[] _sourceOptions;
-        private GUIContent[] _executionSafeModeOptions;
-        private Type[] _argTypes;
-
         private GUIStyle _actionLabelStyle;
-
-        private Vector2 _scrollViewPosition;
-        private bool _requiresScrollView;
-        private string[] _propertyPath;
-
-        private AUECAProperty _targetProperty;
-        private List<MemberInfo> _propertyPathItems;
+        private Dictionary<string, PropertyInfoCache> _propInfoCacheDb = new Dictionary<string, PropertyInfoCache>();
 
         public static void Initialize(SerializedProperty property)
         {
         }
 
-        private void CacheSerializedProperty(SerializedProperty property)
+        private PropertyInfoCache CacheSerializedProperty(SerializedProperty property)
         {
-            _targetProperty = property.GetTarget<AUECAProperty>();
-
-            _sourceModeSP = property.FindPropertyRelative(SourceModeSPName);
-            _executionSafeModeSP = property.FindPropertyRelative(ExecutionSafeModeSPName);
-            _targetSP = property.FindPropertyRelative(TargetSPName);
-            _argIndexSP = property.FindPropertyRelative(ArgIndexSPName);
-            _propertyPathSP = property.FindPropertyRelative(PropertyPathSPName);
-            _propertyPath = (!string.IsNullOrEmpty(_propertyPathSP.stringValue) ? _propertyPathSP.stringValue.Split('.') : new string[0]);
-
-            if (_propertyPathItems == null)
+            if (!_propInfoCacheDb.TryGetValue(property.propertyPath, out PropertyInfoCache pic))
             {
-                _propertyPathItems = BuildPropertyPathItems();
-            }
-
-            _argTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
-            if (_argTypes != null)
-            {
-                _sourceOptions = new string[ReservedOptionsCount + _argTypes.Length];
-                _sourceOptions[TargetOptionIndex] = "Target";
-                for (int i = 0; i < _argTypes.Length; ++i)
+                pic = new PropertyInfoCache()
                 {
-                    _sourceOptions[i + ReservedOptionsCount] = $"{_argTypes[i].Name} arg{i}";
+                    TargetProperty = property.GetTarget<AUECAProperty>(),
+                    SourceModeSP = property.FindPropertyRelative(SourceModeSPName),
+                    ExecutionSafeModeSP = property.FindPropertyRelative(ExecutionSafeModeSPName),
+                    TargetSP = property.FindPropertyRelative(TargetSPName),
+                    ArgIndexSP = property.FindPropertyRelative(ArgIndexSPName),
+                    PropertyPathSP = property.FindPropertyRelative(PropertyPathSPName),
+                    ExecutionSafeModeOptions = EnumDisplayNameHelper.BuildEnumOptions<AUECAProperty.EExecutionSafeMode>(),
+                };
+
+                pic.PropertyPath = (!string.IsNullOrEmpty(pic.PropertyPathSP.stringValue) ? pic.PropertyPathSP.stringValue.Split('.') : new string[0]);
+
+                Type[] argTypes = AUEUtils.LoadMethodDynamicParameterTypes(property);
+                if (argTypes != null)
+                {
+                    pic.SourceOptions = new string[ReservedOptionsCount + argTypes.Length];
+                    pic.SourceOptions[TargetOptionIndex] = "Target";
+                    for (int i = 0; i < argTypes.Length; ++i)
+                    {
+                        pic.SourceOptions[i + ReservedOptionsCount] = $"{argTypes[i].Name} arg{i}";
+                    }
                 }
-            }
-            else
-            {
-                _argTypes = null;
-            }
+                pic.ArgTypes = argTypes;
 
-            _executionSafeModeOptions = EnumDisplayNameHelper.BuildEnumOptions<AUECAProperty.EExecutionSafeMode>();
+                if (pic.PropertyPathItems == null)
+                {
+                    pic.PropertyPathItems = BuildPropertyPathItems(pic);
+                }
 
+                _propInfoCacheDb.Add(property.propertyPath, pic);
+            }
             _actionLabelStyle = GUI.skin.button;
+            return pic;
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            CacheSerializedProperty(property);
+            PropertyInfoCache pic = CacheSerializedProperty(property);
 
             float height = EditorGUIUtility.singleLineHeight;
-            if (_requiresScrollView)
+            if (pic.RequiresScrollView)
             {
                 height += EditorGUIUtility.singleLineHeight;
             }
@@ -98,23 +106,23 @@ namespace AUE
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            CacheSerializedProperty(property);
+            PropertyInfoCache pic = CacheSerializedProperty(property);
 
-            float scrollViewWidth = GetScrollViewWidth();
+            float scrollViewWidth = GetScrollViewWidth(pic);
             if (position.width > 0)
             {
                 bool newRequiresScrollView = (scrollViewWidth > position.width);
-                if (newRequiresScrollView != _requiresScrollView)
+                if (newRequiresScrollView != pic.RequiresScrollView)
                 {
-                    _requiresScrollView = newRequiresScrollView;
+                    pic.RequiresScrollView = newRequiresScrollView;
                     RepaintProperty(property);
                 }
             }
 
-            if (_requiresScrollView)
+            if (pic.RequiresScrollView)
             {
                 Rect viewRect = new Rect(0, 0, scrollViewWidth, EditorGUIUtility.singleLineHeight);
-                _scrollViewPosition = GUI.BeginScrollView(position, _scrollViewPosition, viewRect, alwaysShowHorizontal: true, alwaysShowVertical: false);
+                pic.ScrollViewPosition = GUI.BeginScrollView(position, pic.ScrollViewPosition, viewRect, alwaysShowHorizontal: true, alwaysShowVertical: false);
                 position = viewRect;
             }
             else
@@ -122,41 +130,41 @@ namespace AUE
                 position.height = EditorGUIUtility.singleLineHeight;
             }
 
-            DrawExecutionSafeMode(ref position);
-            DrawSourceOptions(ref position);
-            DrawTargetIFN(ref position);
-            DrawPropertyPath(ref position, property);
+            DrawExecutionSafeMode(pic, ref position);
+            DrawSourceOptions(pic, ref position);
+            DrawTargetIFN(pic, ref position);
+            DrawPropertyPath(pic, ref position, property);
 
-            if (_requiresScrollView)
+            if (pic.RequiresScrollView)
             {
                 GUI.EndScrollView();
             }
         }
 
-        private float GetScrollViewWidth()
+        private float GetScrollViewWidth(PropertyInfoCache pic)
         {
             GUIContent content = new GUIContent();
 
             float width = 0.0f;
 
             // Execution safe mode width
-            int executionModeOptionIndex = _executionSafeModeSP.enumValueIndex;
-            content.text = _executionSafeModeOptions[executionModeOptionIndex].text;
+            int executionModeOptionIndex = pic.ExecutionSafeModeSP.enumValueIndex;
+            content.text = pic.ExecutionSafeModeOptions[executionModeOptionIndex].text;
             width = _actionLabelStyle.CalcSize(content).x + 30 + Space;
 
             // Source Mode width
-            int sourceOptionIndex = FindSourceOptionIndex();
-            content.text = _sourceOptions[sourceOptionIndex];
+            int sourceOptionIndex = FindSourceOptionIndex(pic);
+            content.text = pic.SourceOptions[sourceOptionIndex];
             width += _actionLabelStyle.CalcSize(content).x + 30 + Space;
 
             // Property path width
-            if (_propertyPathItems != null)
+            if (pic.PropertyPathItems != null)
             {
-                for (int i = 0; i < _propertyPathItems.Count; ++i)
+                for (int i = 0; i < pic.PropertyPathItems.Count; ++i)
                 {
-                    content.text = _propertyPathItems[i]?.Name ?? NoneFieldLabel;
+                    content.text = pic.PropertyPathItems[i]?.Name ?? NoneFieldLabel;
                     width += _actionLabelStyle.CalcSize(content).x;
-                    if (i + 1 < _propertyPathItems.Count)
+                    if (i + 1 < pic.PropertyPathItems.Count)
                     {
                         width += Space;
                     }
@@ -170,35 +178,35 @@ namespace AUE
             return width;
         }
 
-        private Rect DrawExecutionSafeMode(ref Rect position)
+        private Rect DrawExecutionSafeMode(PropertyInfoCache pic, ref Rect position)
         {
-            position.width = _actionLabelStyle.CalcSize(_executionSafeModeOptions[_executionSafeModeSP.enumValueIndex]).x + 30;
-            
-            _executionSafeModeSP.enumValueIndex = 
-                EditorGUI.Popup(position, GUIContent.none, _executionSafeModeSP.enumValueIndex, _executionSafeModeOptions);
+            position.width = _actionLabelStyle.CalcSize(pic.ExecutionSafeModeOptions[pic.ExecutionSafeModeSP.enumValueIndex]).x + 30;
+
+            pic.ExecutionSafeModeSP.enumValueIndex = 
+                EditorGUI.Popup(position, GUIContent.none, pic.ExecutionSafeModeSP.enumValueIndex, pic.ExecutionSafeModeOptions);
 
             position.x += position.width - 15 + Space;
             return position;
         }
 
-        private Rect DrawSourceOptions(ref Rect position)
+        private Rect DrawSourceOptions(PropertyInfoCache pic, ref Rect position)
         {
-            int sourceOptionIndex = FindSourceOptionIndex();
+            int sourceOptionIndex = FindSourceOptionIndex(pic);
 
-            position.width = _actionLabelStyle.CalcSize(new GUIContent(_sourceOptions[sourceOptionIndex])).x + 30;
+            position.width = _actionLabelStyle.CalcSize(new GUIContent(pic.SourceOptions[sourceOptionIndex])).x + 30;
 
-            int selectedSourceOption = EditorGUI.Popup(position, sourceOptionIndex, _sourceOptions);
+            int selectedSourceOption = EditorGUI.Popup(position, sourceOptionIndex, pic.SourceOptions);
             if (sourceOptionIndex != selectedSourceOption)
             {
-                ApplySourceOption(selectedSourceOption);
+                ApplySourceOption(pic, selectedSourceOption);
             }
             position.x += position.width + Space;
             return position;
         }
 
-        private Rect DrawTargetIFN(ref Rect position)
+        private Rect DrawTargetIFN(PropertyInfoCache pic, ref Rect position)
         {
-            if (IsTargetModeUsed())
+            if (IsTargetModeUsed(pic))
             {
                 float spaceFixerWidth = 15; // Use to counterbalanced an empty space created by the ObjectField
                 position.width = TargetWidth + spaceFixerWidth * 2;
@@ -206,11 +214,12 @@ namespace AUE
                 
                 EditorGUI.BeginChangeCheck();
                 {
-                    EditorGUI.PropertyField(position, _targetSP, GUIContent.none);
+                    EditorGUI.PropertyField(position, pic.TargetSP, GUIContent.none);
                 }
                 if (EditorGUI.EndChangeCheck())
                 {
-                    SetDirty();
+                    pic.PropertyPathItems.Clear();
+                    SetDirty(pic);
                 }
 
                 position.x += position.width + Space;
@@ -219,32 +228,32 @@ namespace AUE
             return position;
         }
 
-        private void ApplySourceOption(int selectedSourceOption)
+        private void ApplySourceOption(PropertyInfoCache pic, int selectedSourceOption)
         {
             if (selectedSourceOption == TargetOptionIndex)
             {
-                _sourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Target;
-                _argIndexSP.intValue = -1;
+                pic.SourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Target;
+                pic.ArgIndexSP.intValue = -1;
             }
             else
             {
-                _sourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Argument;
-                _argIndexSP.intValue = selectedSourceOption - ReservedOptionsCount;
+                pic.SourceModeSP.enumValueIndex = (int)AUECAProperty.ESourceMode.Argument;
+                pic.ArgIndexSP.intValue = selectedSourceOption - ReservedOptionsCount;
             }
-            SetDirty();
+            SetDirty(pic);
         }
 
-        private int FindSourceOptionIndex()
+        private int FindSourceOptionIndex(PropertyInfoCache pic)
         {
-            var sourceMode = (AUECAProperty.ESourceMode)_sourceModeSP.enumValueIndex;
-            if (IsTargetModeUsed())
+            var sourceMode = (AUECAProperty.ESourceMode)pic.SourceModeSP.enumValueIndex;
+            if (IsTargetModeUsed(pic))
             {
                 return TargetOptionIndex;
             }
-            else if (sourceMode == AUECAProperty.ESourceMode.Argument && _argTypes != null)
+            else if (sourceMode == AUECAProperty.ESourceMode.Argument && pic.ArgTypes != null)
             {
-                int argIdx = _argIndexSP.intValue;
-                if (argIdx >= 0 && argIdx < _argTypes.Length)
+                int argIdx = pic.ArgIndexSP.intValue;
+                if (argIdx >= 0 && argIdx < pic.ArgTypes.Length)
                 {
                     return ReservedOptionsCount + argIdx;
                 }
@@ -252,34 +261,34 @@ namespace AUE
             return 0;
         }
 
-        private bool IsTargetModeUsed()
+        private bool IsTargetModeUsed(PropertyInfoCache pic)
         {
-            var sourceMode = (AUECAProperty.ESourceMode)_sourceModeSP.enumValueIndex;
+            var sourceMode = (AUECAProperty.ESourceMode)pic.SourceModeSP.enumValueIndex;
             return (sourceMode == AUECAProperty.ESourceMode.Target);
         }
 
-        private void DrawPropertyPath(ref Rect position, SerializedProperty property)
+        private void DrawPropertyPath(PropertyInfoCache pic, ref Rect position, SerializedProperty property)
         {
-            if (_propertyPathItems == null)
+            if (pic.PropertyPathItems == null)
             {
                 return;
             }
 
             Rect fieldRect = new Rect(position.x, position.y, FieldPropertyWidth, position.height);
-            Type parentType = GetTargetType();
-            for (int i = 0; i < _propertyPathItems.Count; ++i)
+            Type parentType = GetTargetType(pic);
+            for (int i = 0; i < pic.PropertyPathItems.Count; ++i)
             {
                 if (parentType != null)
                 {
-                    var propertyPathItem = _propertyPathItems[i];
+                    var propertyPathItem = pic.PropertyPathItems[i];
                     string name = propertyPathItem?.Name ?? NoneFieldLabel;
                     fieldRect.width = _actionLabelStyle.CalcSize(new GUIContent(name)).x;
                     if (GUI.Button(fieldRect, name))
                     {
                         new MemberInfosSearchDropdown(property, parentType, i, (sp, selected, index) =>
                         {
-                            SetPropertyPathItem((int)index, selected);
-                            UpdatePropertyPath();
+                            SetPropertyPathItem(pic, (int)index, selected);
+                            UpdatePropertyPath(pic);
                             property.serializedObject.ApplyModifiedProperties();
                             GUI.changed = true;
                         }).Show(fieldRect);
@@ -292,51 +301,51 @@ namespace AUE
                 }
             }
 
-            DrawPropertyPathActions(ref fieldRect);
+            DrawPropertyPathActions(pic, ref fieldRect);
         }
 
-        private void SetPropertyPathItem(int index, MemberInfo selected)
+        private void SetPropertyPathItem(PropertyInfoCache pic, int index, MemberInfo selected)
         {
-            if (GetMemberType(_propertyPathItems[index]) != GetMemberType(selected))
+            if (GetMemberType(pic.PropertyPathItems[index]) != GetMemberType(selected))
             {
-                _propertyPathItems.RemoveRange(index + 1, _propertyPathItems.Count - (index + 1));
+                pic.PropertyPathItems.RemoveRange(index + 1, pic.PropertyPathItems.Count - (index + 1));
             }
-            _propertyPathItems[index] = selected;
+            pic.PropertyPathItems[index] = selected;
         }
 
-        private void DrawPropertyPathActions(ref Rect position)
+        private void DrawPropertyPathActions(PropertyInfoCache pic, ref Rect position)
         {
             position.width = PropertyPathActionButtonWidth;
             if (GUI.Button(position, "+"))
             {
-                _propertyPathItems.Add(null);
-                UpdatePropertyPath();
+                pic.PropertyPathItems.Add(null);
+                UpdatePropertyPath(pic);
             }
             position.x += position.width + Space;
 
-            EditorGUI.BeginDisabledGroup(_propertyPathItems.Count == 0);
+            EditorGUI.BeginDisabledGroup(pic.PropertyPathItems.Count == 0);
             {
                 if (GUI.Button(position, "-"))
                 {
-                    _propertyPathItems.RemoveAt(_propertyPathItems.Count - 1);
-                    UpdatePropertyPath();
+                    pic.PropertyPathItems.RemoveAt(pic.PropertyPathItems.Count - 1);
+                    UpdatePropertyPath(pic);
                 }
             }
             EditorGUI.EndDisabledGroup();
         }
 
-        private List<MemberInfo> BuildPropertyPathItems()
+        private List<MemberInfo> BuildPropertyPathItems(PropertyInfoCache pic)
         {
-            Type targetType = GetTargetType();
+            Type targetType = GetTargetType(pic);
             if (targetType == null)
             {
-                return null;
+                return new List<MemberInfo>();
             }
 
-            var propertyPathItems = new List<MemberInfo>(_propertyPath.Length);
-            for (int i = 0; i < _propertyPath.Length; ++i)
+            var propertyPathItems = new List<MemberInfo>(pic.PropertyPath.Length);
+            for (int i = 0; i < pic.PropertyPath.Length; ++i)
             {
-                var memberInfo = FindMemberInfo(targetType, _propertyPath[i]);
+                var memberInfo = FindMemberInfo(targetType, pic.PropertyPath[i]);
                 if (memberInfo == null)
                 {
                     break;
@@ -348,20 +357,20 @@ namespace AUE
             return propertyPathItems;
         }
 
-        private Type GetTargetType()
+        private Type GetTargetType(PropertyInfoCache pic)
         {
             Type targetType = null;
-            if (IsTargetModeUsed())
+            if (IsTargetModeUsed(pic))
             {
-                if (_targetSP.objectReferenceValue != null)
+                if (pic.TargetSP.objectReferenceValue != null)
                 {
-                    targetType = _targetSP.objectReferenceValue.GetType();
+                    targetType = pic.TargetSP.objectReferenceValue.GetType();
                 }
             }
-            else if (_argTypes != null)
+            else if (pic.ArgTypes != null)
             {
-                int argIdx = _argIndexSP.intValue;
-                targetType = _argTypes[argIdx];
+                int argIdx = pic.ArgIndexSP.intValue;
+                targetType = pic.ArgTypes[argIdx];
             }
             return targetType;
         }
@@ -392,24 +401,24 @@ namespace AUE
             return null;
         }
 
-        private void UpdatePropertyPath()
+        private void UpdatePropertyPath(PropertyInfoCache pic)
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < _propertyPathItems.Count; ++i)
+            for (int i = 0; i < pic.PropertyPathItems.Count; ++i)
             {
-                if (_propertyPathItems[i] == null)
+                if (pic.PropertyPathItems[i] == null)
                 {
                     break;
                 }
 
-                sb.Append(_propertyPathItems[i].Name);
-                if (i + 1 < _propertyPathItems.Count && _propertyPathItems[i + 1] != null)
+                sb.Append(pic.PropertyPathItems[i].Name);
+                if (i + 1 < pic.PropertyPathItems.Count && pic.PropertyPathItems[i + 1] != null)
                 {
                     sb.Append('.');
                 }
             }
-            _propertyPathSP.stringValue = sb.ToString();
-            SetDirty();
+            pic.PropertyPathSP.stringValue = sb.ToString();
+            SetDirty(pic);
         }
 
         private void RepaintProperty(SerializedProperty property)
@@ -424,7 +433,7 @@ namespace AUE
             }
         }
 
-        private void SetDirty() => _targetProperty.SetDirty();
+        private void SetDirty(PropertyInfoCache pic) => pic.TargetProperty.SetDirty();
     }
 }
 
