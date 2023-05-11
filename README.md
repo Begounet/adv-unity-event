@@ -23,7 +23,7 @@ Lightweight but more powerful version of Unity Event.
 
 *Minimum version Unity required: 2019.3*
 
-- [Type Codebase](https://gitea.apperture.fr:3062/Apperture/type-codebase)
+- [Type Codebase](https://github.com/Begounet/type-codebase)
 
 ## Screenshots
 
